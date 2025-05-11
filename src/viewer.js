@@ -275,11 +275,29 @@ function renderNodes(nodes) {
         .attr('rx', 5)
         .attr('ry', 5);
 
-    // Add labels to nodes
+    // Shadow text removed for clarity
+
+    // Add labels to nodes - positioned precisely for crisp rendering
     nodeElements.append('text')
-        .attr('class', 'node-label')
-        .text(d => d.label || d.type || d.id)
-        .attr('dy', 0);
+        .attr('class', d => `node-label node-label-${d.type}`)
+        .text(d => {
+            // Format labels based on node type
+            if (d.type === 'add') {
+                return '+';
+            } else if (d.type === 'mul') {
+                return '×';
+            } else if (d.type === 'relu2') {
+                return 'ReLU²';
+            } else if (d.type === 'clamp') {
+                return 'clamp';
+            } else {
+                return d.label || d.type || d.id;
+            }
+        })
+        // Center text properly in the node
+        .attr('x', 0) // Center horizontally (text-anchor: middle handles this)
+        .attr('y', 0) // Center vertically
+        .attr('dy', '0.3em') // Fine-tune vertical alignment
 
     // Add input ports based on node type
     addNodePorts(nodeElements);
@@ -326,7 +344,12 @@ function addNodePorts(nodeElements) {
 
     // Function to add an input port to a node
     function addInputPort(node, x, y, nodeId, portId) {
-        node.append('circle')
+        // Create a port group to hold the port circle and label
+        const portGroup = node.append('g')
+            .attr('class', 'port-group');
+
+        // Add the port circle
+        portGroup.append('circle')
             .attr('class', 'port port-input')
             .attr('id', `port-${nodeId}-${portId}`)
             .attr('cx', x)
@@ -334,11 +357,18 @@ function addNodePorts(nodeElements) {
             .attr('r', portRadius)
             .append('title')
             .text(`Input: ${portId}`);
+
+        // Removed port labels as per feedback
     }
 
     // Function to add an output port to a node
     function addOutputPort(node, x, y, nodeId, portId) {
-        node.append('circle')
+        // Create a port group to hold the port circle and label
+        const portGroup = node.append('g')
+            .attr('class', 'port-group');
+
+        // Add the port circle
+        portGroup.append('circle')
             .attr('class', 'port port-output')
             .attr('id', `port-${nodeId}-${portId}`)
             .attr('cx', x)
@@ -346,6 +376,8 @@ function addNodePorts(nodeElements) {
             .attr('r', portRadius)
             .append('title')
             .text(`Output: ${portId}`);
+
+        // Removed output port labels as per feedback
     }
 }
 

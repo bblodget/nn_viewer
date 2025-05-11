@@ -20,7 +20,7 @@
 - [x] Add input/output ports to nodes
 - [x] Implement drag and drop for JSON file loading
 - [x] Make the file load controls collapsible/minimizable
-- [ ] Improve text label rendering and positioning
+- [x] Improve text label rendering and positioning
 - [x] Fix connection endpoints to connect to node ports
 
 ## Phase 2: Interactivity (Week 2)

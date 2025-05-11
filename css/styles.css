@@ -150,6 +150,13 @@ svg {
     fill: #e8f5e9;
 }
 
+.port-label {
+    fill: #555;
+    font-size: 8px;
+    font-family: monospace;
+    pointer-events: none;
+}
+
 /* Connection styles */
 .connection {
     stroke: #666;
@@ -161,11 +168,29 @@ svg {
     fill: #666;
 }
 
-/* Text styles */
+/* Text styles - optimized for crisp rendering and proper centering */
 .node-label {
-    font-size: 12px;
-    text-anchor: middle;
-    dominant-baseline: middle;
+    font-size: 14px;
+    text-anchor: middle; /* Horizontal centering */
+    alignment-baseline: middle; /* Vertical centering - more compatible */
+    fill: #000;
+    font-family: Arial, sans-serif;
+    paint-order: stroke;
+    stroke: none;
+}
+
+/* Specific styles - keeping minimal for clarity */
+.node-label-add, .node-label-mul {
+    font-size: 24px; /* Much larger for operators */
+}
+
+/* Keep colors simple and high contrast */
+.node-label-input, .node-label-output {
+    fill: black;
+}
+
+.node-label-relu2, .node-label-clamp {
+    fill: black;
 }
 
 /* Controls section */
