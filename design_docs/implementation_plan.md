@@ -18,7 +18,7 @@
 
 ### Phase 1 Enhancements
 - [x] Add input/output ports to nodes
-- [ ] Implement drag and drop for JSON file loading
+- [x] Implement drag and drop for JSON file loading
 - [x] Make the file load controls collapsible/minimizable
 - [ ] Improve text label rendering and positioning
 - [x] Fix connection endpoints to connect to node ports

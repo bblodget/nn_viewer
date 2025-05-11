@@ -135,6 +135,13 @@ To create your own custom neural network diagrams:
 5. Save the file with a `.json` extension
 6. Load it in the SchematicViewer
 
+## Loading Diagrams
+
+There are two ways to load diagram JSON files into the viewer:
+
+1. **File Input**: Click the "File Options" button in the header and use the file input to select a JSON file
+2. **Drag and Drop**: Simply drag a diagram JSON file from your file explorer and drop it anywhere on the diagram area
+
 ## Future Enhancements
 
 In future versions, the diagram format will be extended to support:

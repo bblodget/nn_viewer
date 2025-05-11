@@ -41,7 +41,7 @@ function showUploadPrompt() {
         .attr('text-anchor', 'middle')
         .style('font-size', '16px')
         .style('fill', '#888')
-        .text('Use the file input above to select a JSON netlist file');
+        .text('Use the file input or drag & drop a JSON file anywhere');
 }
 
 // Set up event listeners for controls
@@ -63,6 +63,78 @@ function setupEventListeners() {
         toggleButton.classList.toggle('collapsed');
         controlsPanel.classList.toggle('collapsed');
     });
+
+    // Set up drag and drop for diagram container
+    setupDragAndDrop();
+}
+
+// Set up drag and drop functionality
+function setupDragAndDrop() {
+    const diagramContainer = document.getElementById('diagram-container');
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        diagramContainer.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    // Highlight drop area when item is dragged over
+    ['dragenter', 'dragover'].forEach(eventName => {
+        diagramContainer.addEventListener(eventName, highlight, false);
+    });
+
+    // Remove highlight when item is dragged out or dropped
+    ['dragleave', 'drop'].forEach(eventName => {
+        diagramContainer.addEventListener(eventName, unhighlight, false);
+    });
+
+    // Handle file drop
+    diagramContainer.addEventListener('drop', handleDrop, false);
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function highlight() {
+        diagramContainer.classList.add('drag-over');
+    }
+
+    function unhighlight() {
+        diagramContainer.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+
+        if (file && file.name.endsWith('.json')) {
+            // Process the file
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (isValidDiagramData(data)) {
+                        renderDiagram(data);
+                    } else {
+                        alert('Invalid diagram format. Please check the JSON structure.');
+                    }
+                } catch (error) {
+                    alert('Error parsing JSON file: ' + error.message);
+                    console.error('Error parsing JSON:', error);
+                }
+            };
+
+            reader.onerror = function() {
+                alert('Error reading file');
+            };
+
+            reader.readAsText(file);
+        } else {
+            alert('Please drop a JSON file');
+        }
+    }
 }
 
 // Handle file selection
