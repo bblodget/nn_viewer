@@ -1,103 +1,238 @@
 {
   "primitives": [
     {
-      "id": "input1",
+      "id": "x0",
       "type": "input",
-      "label": "x0",
+      "label": "x₀",
       "clock_cycle": 0,
-      "position": {"x": 100, "y": 100}
+      "position": {"x": 100, "y": 120}
     },
     {
-      "id": "input2",
+      "id": "w0",
       "type": "input",
-      "label": "w0",
+      "label": "w₀",
       "clock_cycle": 0,
-      "position": {"x": 100, "y": 200}
+      "position": {"x": 100, "y": 220}
+    },
+    {
+      "id": "x1",
+      "type": "input",
+      "label": "x₁",
+      "clock_cycle": 0,
+      "position": {"x": 100, "y": 290}
+    },
+    {
+      "id": "w1",
+      "type": "input",
+      "label": "w₁",
+      "clock_cycle": 0,
+      "position": {"x": 100, "y": 390}
+    },
+    {
+      "id": "bias",
+      "type": "input",
+      "label": "bias",
+      "clock_cycle": 0,
+      "position": {"x": 100, "y": 520}
+    },
+    {
+      "id": "scale",
+      "type": "input",
+      "label": "scale",
+      "clock_cycle": 0,
+      "position": {"x": 100, "y": 620}
+    },
+    {
+      "id": "mul0",
+      "type": "mul",
+      "clock_cycle": 1,
+      "position": {"x": 220, "y": 170}
     },
     {
       "id": "mul1",
       "type": "mul",
       "clock_cycle": 1,
-      "position": {"x": 250, "y": 150}
+      "position": {"x": 220, "y": 340}
     },
     {
-      "id": "input3",
-      "type": "input",
-      "label": "bias",
-      "clock_cycle": 0,
-      "position": {"x": 150, "y": 250}
-    },
-    {
-      "id": "reg1",
+      "id": "reg_bias1",
       "type": "reg",
       "clock_cycle": 1,
-      "position": {"x": 250, "y": 250}
+      "position": {"x": 220, "y": 520}
+    },
+    {
+      "id": "reg_scale1",
+      "type": "reg",
+      "clock_cycle": 1,
+      "position": {"x": 220, "y": 620}
     },
     {
       "id": "add1",
       "type": "add",
       "clock_cycle": 2,
-      "position": {"x": 400, "y": 200}
+      "position": {"x": 320, "y": 250}
+    },
+    {
+      "id": "reg_bias2",
+      "type": "reg",
+      "clock_cycle": 2,
+      "position": {"x": 320, "y": 520}
+    },
+    {
+      "id": "reg_scale2",
+      "type": "reg",
+      "clock_cycle": 2,
+      "position": {"x": 320, "y": 620}
+    },
+    {
+      "id": "add2",
+      "type": "add",
+      "clock_cycle": 3,
+      "position": {"x": 420, "y": 400}
+    },
+    {
+      "id": "reg_scale3",
+      "type": "reg",
+      "clock_cycle": 3,
+      "position": {"x": 420, "y": 620}
     },
     {
       "id": "relu1",
       "type": "relu2",
-      "clock_cycle": 3,
-      "position": {"x": 550, "y": 200}
+      "clock_cycle": 4,
+      "position": {"x": 520, "y": 400}
+    },
+    {
+      "id": "reg_scale4",
+      "type": "reg",
+      "clock_cycle": 4,
+      "position": {"x": 520, "y": 620}
+    },
+    {
+      "id": "mul2",
+      "type": "mul",
+      "clock_cycle": 5,
+      "position": {"x": 620, "y": 400}
     },
     {
       "id": "clamp1",
       "type": "clamp",
-      "clock_cycle": 4,
-      "position": {"x": 700, "y": 200}
+      "clock_cycle": 6,
+      "position": {"x": 720, "y": 400}
     },
     {
       "id": "output1",
       "type": "output",
       "label": "y",
-      "clock_cycle": 5,
-      "position": {"x": 850, "y": 200}
+      "clock_cycle": 7,
+      "position": {"x": 820, "y": 400}
     }
   ],
   "connections": [
     {
-      "source": "input1",
+      "source": "x0",
+      "target": "mul0",
+      "sourcePort": "out",
+      "targetPort": "in1"
+    },
+    {
+      "source": "w0",
+      "target": "mul0",
+      "sourcePort": "out",
+      "targetPort": "in2"
+    },
+    {
+      "source": "x1",
       "target": "mul1",
       "sourcePort": "out",
       "targetPort": "in1"
     },
     {
-      "source": "input2",
+      "source": "w1",
       "target": "mul1",
       "sourcePort": "out",
       "targetPort": "in2"
+    },
+    {
+      "source": "bias",
+      "target": "reg_bias1",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
+      "source": "scale",
+      "target": "reg_scale1",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
+      "source": "mul0",
+      "target": "add1",
+      "sourcePort": "out",
+      "targetPort": "in1"
     },
     {
       "source": "mul1",
       "target": "add1",
       "sourcePort": "out",
-      "targetPort": "in1"
+      "targetPort": "in2"
     },
     {
-      "source": "input3",
-      "target": "reg1",
+      "source": "reg_bias1",
+      "target": "reg_bias2",
       "sourcePort": "out",
       "targetPort": "in"
     },
     {
-      "source": "reg1",
-      "target": "add1",
+      "source": "reg_scale1",
+      "target": "reg_scale2",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
+      "source": "add1",
+      "target": "add2",
+      "sourcePort": "out",
+      "targetPort": "in1"
+    },
+    {
+      "source": "reg_bias2",
+      "target": "add2",
       "sourcePort": "out",
       "targetPort": "in2"
     },
     {
-      "source": "add1",
+      "source": "reg_scale2",
+      "target": "reg_scale3",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
+      "source": "add2",
       "target": "relu1",
       "sourcePort": "out",
       "targetPort": "in"
     },
     {
+      "source": "reg_scale3",
+      "target": "reg_scale4",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
       "source": "relu1",
+      "target": "mul2",
+      "sourcePort": "out",
+      "targetPort": "in1"
+    },
+    {
+      "source": "reg_scale4",
+      "target": "mul2",
+      "sourcePort": "out",
+      "targetPort": "in2"
+    },
+    {
+      "source": "mul2",
       "target": "clamp1",
       "sourcePort": "out",
       "targetPort": "in"
