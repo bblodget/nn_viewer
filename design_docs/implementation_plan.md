@@ -17,11 +17,11 @@
 - [x] Add file loading functionality for diagram.json
 
 ### Phase 1 Enhancements
-- [ ] Add input/output ports to nodes
+- [x] Add input/output ports to nodes
 - [ ] Implement drag and drop for JSON file loading
 - [ ] Make the file load controls collapsible/minimizable
 - [ ] Improve text label rendering and positioning
-- [ ] Fix connection endpoints to connect to node ports
+- [x] Fix connection endpoints to connect to node ports
 
 ## Phase 2: Interactivity (Week 2)
 

@@ -76,6 +76,22 @@ svg {
     fill: #ffd1d1;
 }
 
+/* Port styles */
+.port {
+    stroke: #333;
+    stroke-width: 1px;
+    fill: white;
+    cursor: pointer;
+}
+
+.port-input {
+    fill: #e1f5fe;
+}
+
+.port-output {
+    fill: #e8f5e9;
+}
+
 /* Connection styles */
 .connection {
     stroke: #666;

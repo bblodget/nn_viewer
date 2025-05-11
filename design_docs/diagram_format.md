@@ -30,6 +30,19 @@ Each node represents a component in the neural network and has the following pro
 | `label` | Text to display on the node (defaults to type if not provided) | No |
 | `position` | X/Y coordinates for positioning the node on the canvas | Yes |
 
+### Node Ports
+
+Each node type has specific input and output ports that serve as connection points:
+
+| Node Type | Input Ports | Output Ports |
+|-----------|-------------|--------------|
+| `input` | None | `out` (right side) |
+| `output` | `in` (left side) | None |
+| `add` | `in1` (upper left), `in2` (lower left) | `out` (right side) |
+| `mul` | `in1` (upper left), `in2` (lower left) | `out` (right side) |
+| `relu2` | `in` (left side) | `out` (right side) |
+| `clamp` | `in` (left side) | `out` (right side) |
+
 ### Supported Node Types
 
 The SchematicViewer supports these component types:
@@ -62,8 +75,14 @@ Connections represent the edges between nodes and define how data flows through 
 |----------|-------------|----------|
 | `source` | ID of the source node | Yes |
 | `target` | ID of the target node | Yes |
-| `sourcePort` | Name of the output port on the source node | No |
-| `targetPort` | Name of the input port on the target node | No |
+| `sourcePort` | Name of the output port on the source node (defaults to "out") | No |
+| `targetPort` | Name of the input port on the target node (defaults to "in") | No |
+
+### Port Connections
+
+The `sourcePort` and `targetPort` properties specify which ports to connect between nodes. If these are omitted, the default output port ("out") of the source node will connect to the default input port ("in") of the target node.
+
+For nodes with multiple input ports (like `add` and `mul`), it's recommended to explicitly specify the `targetPort` as either "in1" or "in2" to ensure the connection attaches to the correct input.
 
 ## Example Diagram
 

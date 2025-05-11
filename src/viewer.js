@@ -187,6 +187,7 @@ function renderNodes(nodes) {
 
     // Add rectangles for nodes (different shapes can be implemented in Phase 3)
     nodeElements.append('rect')
+        .attr('class', 'node-body')
         .attr('width', d => d.type === 'input' || d.type === 'output' ? 80 : 60)
         .attr('height', d => d.type === 'input' || d.type === 'output' ? 40 : 60)
         .attr('x', d => d.type === 'input' || d.type === 'output' ? -40 : -30)
@@ -200,7 +201,72 @@ function renderNodes(nodes) {
         .text(d => d.label || d.type || d.id)
         .attr('dy', 0);
 
+    // Add input ports based on node type
+    addNodePorts(nodeElements);
+
     return nodeElements;
+}
+
+// Add input and output ports to nodes
+function addNodePorts(nodeElements) {
+    const portRadius = 5;
+
+    // Add ports based on node type
+    nodeElements.each(function(d) {
+        const node = d3.select(this);
+        const nodeType = d.type;
+
+        // Determine the node dimensions
+        const width = nodeType === 'input' || nodeType === 'output' ? 80 : 60;
+        const height = nodeType === 'input' || nodeType === 'output' ? 40 : 60;
+        const xOffset = nodeType === 'input' || nodeType === 'output' ? -40 : -30;
+        const yOffset = nodeType === 'input' || nodeType === 'output' ? -20 : -30;
+
+        // Add ports based on node type
+        if (nodeType === 'input') {
+            // Input nodes only have output ports
+            addOutputPort(node, width + xOffset, 0, d.id, 'out');
+        }
+        else if (nodeType === 'output') {
+            // Output nodes only have input ports
+            addInputPort(node, xOffset, 0, d.id, 'in');
+        }
+        else if (nodeType === 'add' || nodeType === 'mul') {
+            // Add nodes have two inputs and one output
+            addInputPort(node, xOffset, -10, d.id, 'in1');
+            addInputPort(node, xOffset, 10, d.id, 'in2');
+            addOutputPort(node, width + xOffset, 0, d.id, 'out');
+        }
+        else if (nodeType === 'relu2' || nodeType === 'clamp') {
+            // ReLU and clamp have one input and one output
+            addInputPort(node, xOffset, 0, d.id, 'in');
+            addOutputPort(node, width + xOffset, 0, d.id, 'out');
+        }
+    });
+
+    // Function to add an input port to a node
+    function addInputPort(node, x, y, nodeId, portId) {
+        node.append('circle')
+            .attr('class', 'port port-input')
+            .attr('id', `port-${nodeId}-${portId}`)
+            .attr('cx', x)
+            .attr('cy', y)
+            .attr('r', portRadius)
+            .append('title')
+            .text(`Input: ${portId}`);
+    }
+
+    // Function to add an output port to a node
+    function addOutputPort(node, x, y, nodeId, portId) {
+        node.append('circle')
+            .attr('class', 'port port-output')
+            .attr('id', `port-${nodeId}-${portId}`)
+            .attr('cx', x)
+            .attr('cy', y)
+            .attr('r', portRadius)
+            .append('title')
+            .text(`Output: ${portId}`);
+    }
 }
 
 // Render connections between nodes
@@ -233,20 +299,53 @@ function updateConnectionPaths(connectionElements) {
             return;
         }
 
-        // Get node data to find positions
-        const sourceData = d3.select(sourceNode.node()).datum();
-        const targetData = d3.select(targetNode.node()).datum();
+        // Determine source and target ports
+        const sourcePort = d3.select(`#port-${d.source}-${d.sourcePort || 'out'}`);
+        const targetPort = d3.select(`#port-${d.target}-${d.targetPort || 'in'}`);
 
-        if (!sourceData || !targetData) {
-            console.warn(`Connection data not found for ${d.source} -> ${d.target}`);
+        if (sourcePort.empty() || targetPort.empty()) {
+            console.warn(`Connection ports not found for ${d.source}:${d.sourcePort} -> ${d.target}:${d.targetPort}`);
+
+            // Fall back to using node positions if ports are not found
+            const sourceData = d3.select(sourceNode.node()).datum();
+            const targetData = d3.select(targetNode.node()).datum();
+
+            if (!sourceData || !targetData) {
+                console.warn(`Connection data not found for ${d.source} -> ${d.target}`);
+                return;
+            }
+
+            // Create the path data using the node positions as fallback
+            const pathData = lineGenerator([
+                { x: sourceData.position.x, y: sourceData.position.y },
+                { x: targetData.position.x, y: targetData.position.y }
+            ]);
+
+            connection.attr('d', pathData);
             return;
         }
 
-        // Create the path data using the original node positions
-        const pathData = lineGenerator([
-            { x: sourceData.position.x, y: sourceData.position.y },
-            { x: targetData.position.x, y: targetData.position.y }
-        ]);
+        // Get port positions in global coordinates
+        const sourcePortPos = getPortPosition(sourcePort, sourceNode);
+        const targetPortPos = getPortPosition(targetPort, targetNode);
+
+        // Create a path with a slight curve
+        const dx = targetPortPos.x - sourcePortPos.x;
+        const dy = targetPortPos.y - sourcePortPos.y;
+        const dr = Math.sqrt(dx * dx + dy * dy) * 1.2; // Curve factor
+
+        // Determine if we should use a curved or straight line
+        let pathData;
+        if (Math.abs(dx) > 80 || Math.abs(dy) > 60) {
+            // Use a straight line for connections that are far apart
+            pathData = lineGenerator([
+                { x: sourcePortPos.x, y: sourcePortPos.y },
+                { x: targetPortPos.x, y: targetPortPos.y }
+            ]);
+        } else {
+            // Use a curved line for connections that are close
+            pathData = `M${sourcePortPos.x},${sourcePortPos.y} A${dr},${dr} 0 0,1 ${targetPortPos.x},${targetPortPos.y}`;
+        }
 
         // Set the path
         connection.attr('d', pathData);
@@ -254,6 +353,41 @@ function updateConnectionPaths(connectionElements) {
         // Add arrow marker
         addArrows(connection);
     });
+
+    // Helper function to calculate port position in global coordinates
+    function getPortPosition(port, node) {
+        if (port.empty() || node.empty()) {
+            return { x: 0, y: 0 };
+        }
+
+        // Get the port's local coordinates
+        const cx = +port.attr('cx');
+        const cy = +port.attr('cy');
+
+        // Get the node's transform
+        const transform = getTransform(node);
+
+        // Return the port's global coordinates
+        return {
+            x: cx + transform.x,
+            y: cy + transform.y
+        };
+    }
+
+    // Helper function to extract the transform values
+    function getTransform(element) {
+        const transformStr = element.attr('transform');
+        const match = transformStr.match(/translate\(([^,]+),\s*([^)]+)\)/);
+
+        if (match) {
+            return {
+                x: parseFloat(match[1]),
+                y: parseFloat(match[2])
+            };
+        }
+
+        return { x: 0, y: 0 };
+    }
 }
 
 // Parse the transform attribute to get x,y coordinates
@@ -279,7 +413,7 @@ function addArrows(connection) {
             .append('marker')
             .attr('id', markerId)
             .attr('viewBox', '0 -5 10 10')
-            .attr('refX', 8)
+            .attr('refX', 13) // Position further from the end to account for port radius
             .attr('refY', 0)
             .attr('markerWidth', 6)
             .attr('markerHeight', 6)
