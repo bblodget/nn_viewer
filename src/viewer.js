@@ -263,16 +263,13 @@ function handleFileSelect(event) {
 
 // Validate diagram data
 function isValidDiagramData(data) {
-    // Check for primitives array - support both old 'nodes' and new 'primitives' format
-    const primitivesArray = data.primitives || data.nodes;
-    
     // Basic validation - ensure there are primitives and connections
-    if (!data || !Array.isArray(primitivesArray) || !Array.isArray(data.connections)) {
+    if (!data || !Array.isArray(data.primitives) || !Array.isArray(data.connections)) {
         return false;
     }
 
     // Check that primitives have required properties
-    for (const primitive of primitivesArray) {
+    for (const primitive of data.primitives) {
         if (!primitive.id || !primitive.type || !primitive.position ||
             typeof primitive.position.x !== 'number' ||
             typeof primitive.position.y !== 'number') {
@@ -373,13 +370,10 @@ function loadDiagram(url) {
 function renderDiagram(data) {
     // Clear existing content
     diagram.selectAll('*').remove();
-    
-    // Get primitives array (support both old 'nodes' and new 'primitives' format)
-    const primitives = data.primitives || data.nodes || [];
-    
+
     // Basic rendering implementation
-    renderPrimitives(primitives);
-    renderConnections(data.connections || []);
+    renderPrimitives(data.primitives);
+    renderConnections(data.connections);
 }
 
 // Render primitives as SVG elements
