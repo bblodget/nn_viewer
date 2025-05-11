@@ -50,11 +50,19 @@ function setupEventListeners() {
     const fileInput = document.getElementById('file-input');
     fileInput.addEventListener('change', handleFileSelect);
 
-    // Remove the sample button from DOM since we don't have a sample anymore
-    const loadSampleButton = document.getElementById('load-sample');
-    if (loadSampleButton) {
-        loadSampleButton.remove();
-    }
+    // Set up toggle controls button
+    const toggleButton = document.getElementById('toggle-controls');
+    const controlsPanel = document.getElementById('controls');
+
+    // Set initial state (collapsed by default)
+    toggleButton.classList.add('collapsed');
+    controlsPanel.classList.add('collapsed');
+
+    // Toggle controls visibility when button is clicked
+    toggleButton.addEventListener('click', () => {
+        toggleButton.classList.toggle('collapsed');
+        controlsPanel.classList.toggle('collapsed');
+    });
 }
 
 // Handle file selection

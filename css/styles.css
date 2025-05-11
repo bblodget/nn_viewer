@@ -111,12 +111,60 @@ svg {
 }
 
 /* Controls section */
-#controls {
+#controls-container {
+    position: relative;
     margin-bottom: 1rem;
+    z-index: 100;
+}
+
+.toggle-button {
+    background-color: #2c3e50;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+}
+
+.toggle-button:hover {
+    background-color: #3a4d61;
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.toggle-button.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.controls-panel {
     padding: 1rem;
     background-color: #f0f0f0;
-    border-radius: 5px;
+    border-radius: 0 5px 5px 5px;
     border: 1px solid #ddd;
+    transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+    max-height: 200px;
+    overflow: hidden;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.controls-panel.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    border: none;
+    pointer-events: none;
 }
 
 .control-group {
@@ -129,20 +177,6 @@ svg {
 #controls label {
     font-weight: bold;
     margin-right: 5px;
-}
-
-#controls button {
-    background-color: #2c3e50;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#controls button:hover {
-    background-color: #1a2530;
 }
 
 #file-input {
