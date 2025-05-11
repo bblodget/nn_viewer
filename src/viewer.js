@@ -429,6 +429,8 @@ function renderPrimitives(primitives) {
                 return 'ReLU²';
             } else if (d.type === 'clamp') {
                 return 'clamp';
+            } else if (d.type === 'reg') {
+                return 'REG';
             } else if (d.type === 'input' || d.type === 'output') {
                 // For input/output, use label or ID (typically x0, w0, y)
                 return d.label || d.id;
@@ -544,8 +546,8 @@ function addPrimitivePorts(primitiveElements) {
             addInputPort(primitive, xOffset, 10, d.id, 'in2');
             addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
         }
-        else if (primitiveType === 'relu2' || primitiveType === 'clamp') {
-            // ReLU and clamp have one input and one output
+        else if (primitiveType === 'relu2' || primitiveType === 'clamp' || primitiveType === 'reg') {
+            // ReLU, clamp, and reg have one input and one output
             addInputPort(primitive, xOffset, 0, d.id, 'in');
             addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
         }

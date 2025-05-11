@@ -46,10 +46,16 @@
       "position": {"x": 700, "y": 200}
     },
     {
+      "id": "reg1",
+      "type": "reg",
+      "clock_cycle": 5,
+      "position": {"x": 770, "y": 200}
+    },
+    {
       "id": "output1",
       "type": "output",
       "label": "y",
-      "clock_cycle": 5,
+      "clock_cycle": 6,
       "position": {"x": 850, "y": 200}
     }
   ],
@@ -92,6 +98,12 @@
     },
     {
       "source": "clamp1",
+      "target": "reg1",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
+      "source": "reg1",
       "target": "output1",
       "sourcePort": "out",
       "targetPort": "in"

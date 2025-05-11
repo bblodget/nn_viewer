@@ -44,6 +44,7 @@ Each primitive type has specific input and output ports that serve as connection
 | `mul` | `in1` (upper left), `in2` (lower left) | `out` (right side) |
 | `relu2` | `in` (left side) | `out` (right side) |
 | `clamp` | `in` (left side) | `out` (right side) |
+| `reg` | `in` (left side) | `out` (right side) |
 
 ### Supported Primitive Types
 
@@ -57,6 +58,7 @@ The SchematicViewer supports these basic component types:
 | `mul` | Multiplication block with two inputs | White square |
 | `relu2` | Square of ReLU activation | Yellow square |
 | `clamp` | Range limiter | Light red square |
+| `reg` | Register that passes signal through while consuming a clock cycle | Light purple square |
 
 ## Connection Format
 

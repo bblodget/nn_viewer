@@ -218,6 +218,10 @@ svg {
     fill: #ffd1d1;
 }
 
+.primitive-reg {
+    fill: #e6d1ff;
+}
+
 /* Port styles */
 .port {
     stroke: #333;
