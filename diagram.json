@@ -4,44 +4,52 @@
       "id": "input1",
       "type": "input",
       "label": "x0",
+      "clock_cycle": 0,
       "position": {"x": 100, "y": 100}
     },
     {
       "id": "input2",
       "type": "input",
       "label": "w0",
+      "clock_cycle": 0,
       "position": {"x": 100, "y": 200}
     },
     {
       "id": "mul1",
       "type": "mul",
+      "clock_cycle": 1,
       "position": {"x": 250, "y": 150}
     },
     {
       "id": "input3",
       "type": "input",
       "label": "bias",
+      "clock_cycle": 1,
       "position": {"x": 250, "y": 250}
     },
     {
       "id": "add1",
       "type": "add",
+      "clock_cycle": 2,
       "position": {"x": 400, "y": 200}
     },
     {
       "id": "relu1",
       "type": "relu2",
+      "clock_cycle": 3,
       "position": {"x": 550, "y": 200}
     },
     {
       "id": "clamp1",
       "type": "clamp",
+      "clock_cycle": 4,
       "position": {"x": 700, "y": 200}
     },
     {
       "id": "output1",
       "type": "output",
       "label": "y",
+      "clock_cycle": 5,
       "position": {"x": 850, "y": 200}
     }
   ],

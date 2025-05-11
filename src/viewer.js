@@ -8,6 +8,18 @@ let svg;
 let diagram;
 let zoom;
 let lineGenerator;
+let gridGroup;
+
+// Grid configuration
+const gridConfig = {
+    visible: true,
+    spacing: {
+        x: 100, // Width of a clock cycle column
+        y: 50   // Base row height
+    },
+    color: '#e0e0e0',
+    thickness: 1
+};
 
 // This file has been removed - we now require users to upload JSON files
 
@@ -69,6 +81,51 @@ function setupEventListeners() {
 
     // Set up zoom control buttons
     setupZoomControls();
+
+    // Set up grid control event listeners
+    setupGridControls();
+}
+
+// Set up grid control event listeners
+function setupGridControls() {
+    const gridToggle = document.getElementById('grid-toggle');
+    const gridSpacing = document.getElementById('grid-spacing');
+
+    // Grid visibility toggle
+    if (gridToggle) {
+        gridToggle.addEventListener('change', () => {
+            gridConfig.visible = gridToggle.checked;
+            renderGrid();
+        });
+    }
+
+    // Grid spacing adjustment
+    if (gridSpacing) {
+        gridSpacing.addEventListener('change', () => {
+            // Update spacing configuration
+            const spacing = parseInt(gridSpacing.value, 10);
+            if (!isNaN(spacing)) {
+                gridConfig.spacing.x = spacing;
+
+                // Re-render the grid with new spacing
+                renderGrid();
+
+                // If a diagram is currently displayed, re-render it with new positions
+                if (diagram.selectAll('.node').size() > 0) {
+                    // Get the current data
+                    const nodes = diagram.selectAll('.node').data();
+                    const connections = diagram.selectAll('.connection').data();
+
+                    // Clear existing content
+                    diagram.selectAll('*').remove();
+
+                    // Re-render with new grid spacing
+                    renderNodes(nodes);
+                    renderConnections(connections);
+                }
+            }
+        });
+    }
 }
 
 // Set up zoom control buttons
@@ -218,6 +275,11 @@ function isValidDiagramData(data) {
             typeof node.position.y !== 'number') {
             return false;
         }
+
+        // If clock_cycle is provided, ensure it's a number
+        if (node.clock_cycle !== undefined && typeof node.clock_cycle !== 'number') {
+            return false;
+        }
     }
 
     // Check that connections have required properties
@@ -240,7 +302,12 @@ function initializeSVG() {
         .attr('width', '100%')
         .attr('height', '100%');
 
-    // Add a group for transformation
+    // Add a group for the grid - placed first to be in the background
+    gridGroup = svg.append('g')
+        .attr('class', 'grid')
+        .attr('transform', 'translate(50, 50)'); // Same initial offset as diagram
+
+    // Add a group for node/connection transformation
     diagram = svg.append('g')
         .attr('class', 'diagram')
         .attr('transform', 'translate(50, 50)'); // Add initial offset for better visibility
@@ -250,8 +317,9 @@ function initializeSVG() {
         .scaleExtent([0.2, 4]) // Set min and max zoom levels (0.2x to 4x)
         .extent([[0, 0], [container.clientWidth, container.clientHeight]])
         .on('zoom', (event) => {
-            // Apply the zoom transform to the diagram
+            // Apply the zoom transform to both diagram and grid
             diagram.attr('transform', event.transform);
+            gridGroup.attr('transform', event.transform);
         });
 
     // Apply zoom behavior to SVG
@@ -276,6 +344,9 @@ function initializeSVG() {
     lineGenerator = d3.line()
         .x(d => d.x)
         .y(d => d.y);
+
+    // Render the grid
+    renderGrid();
 }
 
 // Load and parse a diagram from JSON (for server-based usage)
@@ -307,13 +378,33 @@ function renderDiagram(data) {
 
 // Render nodes as SVG elements
 function renderNodes(nodes) {
+    // Process the nodes to determine clock cycles if not specified
+    const processedNodes = nodes.map(node => {
+        // Clone the node to avoid modifying the original
+        const processedNode = {...node};
+
+        // If the node doesn't have a clock_cycle, infer it based on position
+        if (processedNode.clock_cycle === undefined) {
+            // Simple heuristic: assign clock cycle based on x position
+            // Approximately map x position to clock cycle
+            processedNode.clock_cycle = Math.floor(processedNode.position.x / gridConfig.spacing.x);
+        }
+
+        return processedNode;
+    });
+
     const nodeElements = diagram.selectAll('.node')
-        .data(nodes)
+        .data(processedNodes)
         .enter()
         .append('g')
         .attr('class', d => `node node-${d.type}`)
         .attr('id', d => `node-${d.id}`)
-        .attr('transform', d => `translate(${d.position.x}, ${d.position.y})`);
+        .attr('data-clock-cycle', d => d.clock_cycle) // Store clock cycle as data attribute
+        .each(function(d) {
+            // Calculate position based on clock cycle
+            const pos = calculateClockCyclePosition(d);
+            d3.select(this).attr('transform', `translate(${pos.x}, ${pos.y})`);
+        });
 
     // Add rectangles for nodes (different shapes can be implemented in Phase 3)
     nodeElements.append('rect')
@@ -387,9 +478,9 @@ function renderNodes(nodes) {
         }
     });
 
-    // Add tooltip with node details on hover
+    // Add tooltip with node details on hover, now including clock cycle
     nodeElements.append('title')
-        .text(d => `Type: ${d.type}\nID: ${d.id}`);
+        .text(d => `Type: ${d.type}\nID: ${d.id}\nClock Cycle: ${d.clock_cycle}`);
 
     return nodeElements;
 }
@@ -399,14 +490,30 @@ function highlightConnections(nodeId) {
     // First, remove all highlights
     clearHighlights();
 
+    // Get the node data
+    const nodeData = diagram.select(`#node-${nodeId}`).datum();
+
     // Highlight connections where this node is source or target
     diagram.selectAll('.connection')
         .classed('highlighted', d => d.source === nodeId || d.target === nodeId);
+
+    // If the node has a clock cycle, highlight that cycle column
+    if (nodeData && nodeData.clock_cycle !== undefined) {
+        highlightClockCycle(nodeData.clock_cycle);
+    }
 }
 
 // Clear all highlights
 function clearHighlights() {
     diagram.selectAll('.connection').classed('highlighted', false);
+    gridGroup.selectAll('.grid-line-vertical').classed('highlighted', false);
+}
+
+// Highlight a specific clock cycle column
+function highlightClockCycle(cycleIndex) {
+    // Highlight the vertical grid line for this clock cycle
+    gridGroup.selectAll('.grid-line-vertical')
+        .classed('highlighted', (d, i) => i === cycleIndex);
 }
 
 // Add input and output ports to nodes
@@ -641,6 +748,76 @@ function addArrows(connection) {
 
     // Apply marker to connection
     connection.attr('marker-end', `url(#${markerId})`);
+}
+
+// Render the grid system based on clock cycles
+function renderGrid() {
+    // Clear any existing grid
+    gridGroup.selectAll('*').remove();
+
+    if (!gridConfig.visible) return;
+
+    const container = document.getElementById('diagram-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    // Calculate grid size - add extra to ensure it extends beyond viewport
+    const cols = Math.ceil(width / gridConfig.spacing.x) + 5;
+    const rows = Math.ceil(height / gridConfig.spacing.y) + 5;
+
+    // Create vertical lines for clock cycles
+    const verticalLines = gridGroup.selectAll('.grid-line-vertical')
+        .data(d3.range(cols))
+        .enter()
+        .append('line')
+        .attr('class', 'grid-line grid-line-vertical')
+        .attr('x1', d => d * gridConfig.spacing.x)
+        .attr('y1', -gridConfig.spacing.y) // Start above the visible area
+        .attr('x2', d => d * gridConfig.spacing.x)
+        .attr('y2', rows * gridConfig.spacing.y)
+        .attr('stroke', gridConfig.color)
+        .attr('stroke-width', gridConfig.thickness);
+
+    // Create horizontal lines for rows
+    const horizontalLines = gridGroup.selectAll('.grid-line-horizontal')
+        .data(d3.range(rows))
+        .enter()
+        .append('line')
+        .attr('class', 'grid-line grid-line-horizontal')
+        .attr('x1', -gridConfig.spacing.x) // Start to the left of visible area
+        .attr('y1', d => d * gridConfig.spacing.y)
+        .attr('x2', cols * gridConfig.spacing.x)
+        .attr('y2', d => d * gridConfig.spacing.y)
+        .attr('stroke', gridConfig.color)
+        .attr('stroke-width', gridConfig.thickness);
+
+    // Add clock cycle labels
+    const clockLabels = gridGroup.selectAll('.clock-cycle-label')
+        .data(d3.range(cols))
+        .enter()
+        .append('text')
+        .attr('class', 'clock-cycle-label')
+        .attr('x', d => d * gridConfig.spacing.x + gridConfig.spacing.x / 2)
+        .attr('y', -5) // Position above the grid
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '10px')
+        .attr('fill', '#666')
+        .text(d => `c${d}`);
+}
+
+// Calculate node position based on clock cycle
+function calculateClockCyclePosition(node) {
+    // If the node has a clock_cycle property, use it for x positioning
+    if (node.clock_cycle !== undefined) {
+        // Keep the original y position, but adjust x based on clock cycle
+        return {
+            x: node.clock_cycle * gridConfig.spacing.x + gridConfig.spacing.x / 2,
+            y: node.position.y
+        };
+    }
+
+    // If no clock_cycle is defined, use the original position
+    return node.position;
 }
 
 // Helper functions will be added as needed

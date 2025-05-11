@@ -145,6 +145,39 @@ svg {
     height: 100%;
 }
 
+/* Grid styles */
+.grid-line {
+    stroke-dasharray: 2, 2;
+    opacity: 0.6;
+}
+
+.grid-line-vertical {
+    stroke-width: 1px;
+}
+
+.grid-line-horizontal {
+    stroke-width: 1px;
+}
+
+.grid-line-vertical.highlighted {
+    stroke-width: 2px;
+    stroke: #2c3e50;
+    stroke-dasharray: none;
+    opacity: 0.8;
+}
+
+.clock-cycle-label {
+    font-family: monospace;
+    user-select: none;
+    pointer-events: none;
+}
+
+.clock-cycle-indicator {
+    font-family: monospace;
+    user-select: none;
+    pointer-events: none;
+}
+
 /* Node styles - will be expanded in Phase 3 */
 .node {
     stroke: #333;

@@ -17,6 +17,7 @@ Each node represents a component in the neural network and has the following pro
   "id": "unique_identifier",
   "type": "component_type",
   "label": "display_text",
+  "clock_cycle": 1,
   "position": {"x": 100, "y": 200}
 }
 ```
@@ -28,6 +29,7 @@ Each node represents a component in the neural network and has the following pro
 | `id` | Unique identifier for the node | Yes |
 | `type` | The component type (see supported types below) | Yes |
 | `label` | Text to display on the node (defaults to type if not provided) | No |
+| `clock_cycle` | Temporal position (column) in the grid system | No |
 | `position` | X/Y coordinates for positioning the node on the canvas | Yes |
 
 ### Node Ports
@@ -158,10 +160,79 @@ The SchematicViewer supports interactive features to explore diagrams:
 - **Background Click**: Click on the background to deselect everything
 - **Tooltips**: Hover over components to see additional information
 
-## Future Enhancements
+### Grid System
+- **Clock Cycle Alignment**: Nodes are aligned in columns based on their clock cycle
+- **Toggle Grid**: Use the grid controls to show/hide the grid
+- **Adjust Spacing**: Configure the grid spacing using the dropdown menu
+- **Column Highlighting**: When a node is selected, its clock cycle column is highlighted
 
-In future versions, the diagram format will be extended to support:
-- Node grouping into macros/subcircuits
-- Additional node metadata
-- Custom visual styling options
-- Multiple diagram layers
+## Hierarchical Structure
+
+The diagram format has been extended to support a hierarchical structure. The current implementation includes clock cycle alignment, with further enhancements planned.
+
+### Clock Cycle Alignment
+
+Nodes are aligned based on their temporal relationship in the neural network:
+
+```json
+{
+  "id": "input1",
+  "type": "input",
+  "clock_cycle": 0,  // Temporal position
+  "position": {"x": 100, "y": 100}
+}
+```
+
+Elements with the same clock cycle will be vertically aligned, representing operations that occur in parallel.
+
+### Relative Positioning
+
+Nodes can be positioned relative to other nodes:
+
+```json
+{
+  "id": "input2",
+  "type": "input",
+  "clock_cycle": 0,
+  "position": {
+    "relativeTo": "input1",
+    "relation": "below",
+    "offset": {"y": 20}
+  }
+}
+```
+
+### Multi-Level Hierarchy
+
+The diagram format will evolve to support four levels of hierarchy:
+
+1. **Primitives** (currently called "nodes") - Basic operations like add, mul, relu²
+2. **Compound Nodes** - Collections of primitives forming functional units
+3. **Layers** - Collections of compound nodes forming neural network layers
+4. **Networks** - Complete neural network architectures
+
+### Compound Node Structure
+
+Compound nodes will encapsulate multiple primitives:
+
+```json
+{
+  "id": "linear1",
+  "type": "quantized_linear",
+  "clock_cycle": 1,
+  "position": {"x": 200, "y": 100},
+  "components": ["mul1", "add1", "clamp1"],
+  "connections": [
+    {"source": "mul1", "target": "add1"},
+    {"source": "add1", "target": "clamp1"}
+  ]
+}
+```
+
+### Grid System
+
+A grid system will provide:
+- Visual alignment guides
+- Clock cycle-based columnar organization
+- Consistent spacing between components
+- Multi-scale viewing for different hierarchy levels

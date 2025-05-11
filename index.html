@@ -27,6 +27,23 @@
                     <label for="file-input">Load Diagram:</label>
                     <input type="file" id="file-input" accept=".json">
                 </div>
+                <div class="control-group" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+                    <label>Grid Options:</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="grid-toggle" style="font-weight: normal;">
+                            <input type="checkbox" id="grid-toggle" checked>
+                            Show Grid
+                        </label>
+                        <label for="grid-spacing" style="font-weight: normal;">
+                            Spacing:
+                            <select id="grid-spacing">
+                                <option value="80">Narrow</option>
+                                <option value="100" selected>Medium</option>
+                                <option value="150">Wide</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 
