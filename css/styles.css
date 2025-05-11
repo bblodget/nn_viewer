@@ -101,6 +101,44 @@ main {
     opacity: 1;
 }
 
+/* Zoom controls */
+.zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 100;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.zoom-controls button {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-controls button:hover {
+    background-color: #f0f0f0;
+}
+
+.zoom-controls button:active {
+    background-color: #e0e0e0;
+}
+
 /* SVG styles */
 svg {
     width: 100%;
@@ -112,6 +150,19 @@ svg {
     stroke: #333;
     stroke-width: 2px;
     fill: white;
+    cursor: pointer;
+    transition: filter 0.2s, stroke-width 0.2s;
+}
+
+.node:hover {
+    stroke-width: 3px;
+    filter: brightness(1.05);
+}
+
+.node.selected {
+    stroke: #2c3e50;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.3));
 }
 
 .node-input {
@@ -162,10 +213,28 @@ svg {
     stroke: #666;
     stroke-width: 2px;
     fill: none;
+    transition: stroke-width 0.2s, stroke 0.2s;
+    cursor: pointer;
+}
+
+.connection:hover {
+    stroke: #444;
+    stroke-width: 3px;
+}
+
+.connection.highlighted {
+    stroke: #2c3e50;
+    stroke-width: 3px;
 }
 
 .connection-arrow {
     fill: #666;
+    transition: fill 0.2s;
+}
+
+.connection:hover .connection-arrow,
+.connection.highlighted .connection-arrow {
+    fill: #444;
 }
 
 /* Text styles - optimized for crisp rendering and alignment with ports */

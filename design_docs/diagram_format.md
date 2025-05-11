@@ -142,6 +142,22 @@ There are two ways to load diagram JSON files into the viewer:
 1. **File Input**: Click the "File Options" button in the header and use the file input to select a JSON file
 2. **Drag and Drop**: Simply drag a diagram JSON file from your file explorer and drop it anywhere on the diagram area
 
+## Interactivity
+
+The SchematicViewer supports interactive features to explore diagrams:
+
+### Zoom and Pan
+- **Zoom Buttons**: Use the + and - buttons in the bottom right corner
+- **Mouse Wheel**: Scroll to zoom in and out
+- **Double-Click**: Reset the view to default zoom level
+- **Drag**: Click and drag on the background to pan the diagram
+
+### Node Selection and Highlighting
+- **Hover Effects**: Hover over nodes and connections to highlight them
+- **Click Selection**: Click on a node to select it and highlight all its connections
+- **Background Click**: Click on the background to deselect everything
+- **Tooltips**: Hover over components to see additional information
+
 ## Future Enhancements
 
 In future versions, the diagram format will be extended to support:

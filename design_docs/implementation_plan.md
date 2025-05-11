@@ -26,10 +26,10 @@
 ## Phase 2: Interactivity (Week 2)
 
 ### User Interaction
-- [ ] Implement zoom and pan functionality using d3.zoom()
-- [ ] Add hover states for nodes and connections
-- [ ] Create basic node selection capability
-- [ ] Implement basic grid system for alignment
+- [x] Implement zoom and pan functionality using d3.zoom()
+- [x] Add hover states for nodes and connections
+- [x] Create basic node selection capability
+- [ ] Implement basic grid system for alignment (pending discussion)
 
 ### JSON Parser & Validator
 - [ ] Create JSON schema for netlists

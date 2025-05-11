@@ -66,6 +66,39 @@ function setupEventListeners() {
 
     // Set up drag and drop for diagram container
     setupDragAndDrop();
+
+    // Set up zoom control buttons
+    setupZoomControls();
+}
+
+// Set up zoom control buttons
+function setupZoomControls() {
+    const zoomIn = document.getElementById('zoom-in');
+    const zoomOut = document.getElementById('zoom-out');
+    const zoomReset = document.getElementById('zoom-reset');
+
+    if (zoomIn && zoomOut && zoomReset) {
+        // Zoom in button
+        zoomIn.addEventListener('click', () => {
+            svg.transition()
+               .duration(300)
+               .call(zoom.scaleBy, 1.3); // 30% zoom in
+        });
+
+        // Zoom out button
+        zoomOut.addEventListener('click', () => {
+            svg.transition()
+               .duration(300)
+               .call(zoom.scaleBy, 0.7); // 30% zoom out
+        });
+
+        // Reset zoom button
+        zoomReset.addEventListener('click', () => {
+            svg.transition()
+               .duration(500)
+               .call(zoom.transform, d3.zoomIdentity.translate(50, 50).scale(1));
+        });
+    }
 }
 
 // Set up drag and drop functionality
@@ -212,15 +245,32 @@ function initializeSVG() {
         .attr('class', 'diagram')
         .attr('transform', 'translate(50, 50)'); // Add initial offset for better visibility
 
-    // Set up zoom behavior (will be implemented in Phase 2)
-    // This is a placeholder for now
+    // Set up enhanced zoom behavior with limits and transitions
     zoom = d3.zoom()
+        .scaleExtent([0.2, 4]) // Set min and max zoom levels (0.2x to 4x)
+        .extent([[0, 0], [container.clientWidth, container.clientHeight]])
         .on('zoom', (event) => {
+            // Apply the zoom transform to the diagram
             diagram.attr('transform', event.transform);
         });
 
     // Apply zoom behavior to SVG
-    svg.call(zoom);
+    svg.call(zoom)
+       // Add double-click to reset
+       .on('dblclick.zoom', () => {
+           svg.transition()
+              .duration(500)
+              .call(zoom.transform, d3.zoomIdentity.translate(50, 50).scale(1));
+       });
+
+    // Initialize with a slight offset for better initial view
+    svg.call(zoom.transform, d3.zoomIdentity.translate(50, 50).scale(1));
+
+    // Add click handler on SVG background to deselect nodes
+    svg.on('click', () => {
+        diagram.selectAll('.node').classed('selected', false);
+        clearHighlights();
+    });
 
     // Initialize the line generator for connections
     lineGenerator = d3.line()
@@ -310,12 +360,53 @@ function renderNodes(nodes) {
             }
         })
         // Additional fine-tuning with dy
-        .attr('dy', '0em')
+        .attr('dy', '0em');
 
     // Add input ports based on node type
     addNodePorts(nodeElements);
 
+    // Add interaction capabilities to nodes
+    nodeElements.on('click', (event, d) => {
+        event.stopPropagation(); // Prevent propagation to SVG background
+
+        // Toggle selected class on the clicked node
+        const isSelected = d3.select(event.currentTarget).classed('selected');
+
+        // Remove selection from all nodes first
+        diagram.selectAll('.node').classed('selected', false);
+
+        // If the node wasn't already selected, select it
+        if (!isSelected) {
+            d3.select(event.currentTarget).classed('selected', true);
+
+            // Highlight connected paths
+            highlightConnections(d.id);
+        } else {
+            // If it was already selected, deselect everything
+            clearHighlights();
+        }
+    });
+
+    // Add tooltip with node details on hover
+    nodeElements.append('title')
+        .text(d => `Type: ${d.type}\nID: ${d.id}`);
+
     return nodeElements;
+}
+
+// Highlight connections related to a node
+function highlightConnections(nodeId) {
+    // First, remove all highlights
+    clearHighlights();
+
+    // Highlight connections where this node is source or target
+    diagram.selectAll('.connection')
+        .classed('highlighted', d => d.source === nodeId || d.target === nodeId);
+}
+
+// Clear all highlights
+function clearHighlights() {
+    diagram.selectAll('.connection').classed('highlighted', false);
 }
 
 // Add input and output ports to nodes
