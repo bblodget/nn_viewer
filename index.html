@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchematicViewer - Neural Network Diagram Tool</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Include D3.js from CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>SchematicViewer</h1>
+        <p>Interactive Neural Network Node Diagram Tool</p>
+    </header>
+    
+    <main>
+        <div id="controls">
+            <div class="control-group">
+                <label for="file-input">Load Diagram:</label>
+                <input type="file" id="file-input" accept=".json">
+            </div>
+        </div>
+
+        <div id="diagram-container">
+            <!-- SVG diagram will be rendered here -->
+        </div>
+    </main>
+    
+    <footer>
+        <p>SchematicViewer - MIT License</p>
+    </footer>
+
+    <!-- Main viewer script -->
+    <script src="src/viewer.js"></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "input1",
+      "type": "input",
+      "label": "x0",
+      "position": {"x": 100, "y": 100}
+    },
+    {
+      "id": "input2",
+      "type": "input",
+      "label": "w0",
+      "position": {"x": 100, "y": 200}
+    },
+    {
+      "id": "mul1",
+      "type": "mul",
+      "position": {"x": 250, "y": 150}
+    },
+    {
+      "id": "input3",
+      "type": "input",
+      "label": "bias",
+      "position": {"x": 250, "y": 250}
+    },
+    {
+      "id": "add1",
+      "type": "add",
+      "position": {"x": 400, "y": 200}
+    },
+    {
+      "id": "relu1",
+      "type": "relu2",
+      "position": {"x": 550, "y": 200}
+    },
+    {
+      "id": "clamp1",
+      "type": "clamp",
+      "position": {"x": 700, "y": 200}
+    },
+    {
+      "id": "output1",
+      "type": "output",
+      "label": "y",
+      "position": {"x": 850, "y": 200}
+    }
+  ],
+  "connections": [
+    {
+      "source": "input1",
+      "target": "mul1",
+      "sourcePort": "out",
+      "targetPort": "in1"
+    },
+    {
+      "source": "input2",
+      "target": "mul1",
+      "sourcePort": "out",
+      "targetPort": "in2"
+    },
+    {
+      "source": "mul1",
+      "target": "add1",
+      "sourcePort": "out",
+      "targetPort": "in1"
+    },
+    {
+      "source": "input3",
+      "target": "add1",
+      "sourcePort": "out",
+      "targetPort": "in2"
+    },
+    {
+      "source": "add1",
+      "target": "relu1",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
+      "source": "relu1",
+      "target": "clamp1",
+      "sourcePort": "out",
+      "targetPort": "in"
+    },
+    {
+      "source": "clamp1",
+      "target": "output1",
+      "sourcePort": "out",
+      "targetPort": "in"
+    }
+  ]
+}

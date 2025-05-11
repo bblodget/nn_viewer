@@ -3,16 +3,25 @@
 ## Phase 1: Foundation (Week 1)
 
 ### Setup & Structure
-- [ ] Create basic project structure
-- [ ] Initialize HTML, CSS, and JavaScript files
-- [ ] Set up D3.js integration
-- [ ] Create sample JSON netlist format
+- [x] Create basic project structure
+- [x] Initialize HTML, CSS, and JavaScript files
+- [x] Set up D3.js integration
+- [x] Create sample JSON netlist format
+- [x] Create diagram format documentation
 
 ### Core Rendering
-- [ ] Implement basic SVG canvas
-- [ ] Create node rendering logic for different component types
-- [ ] Implement connection rendering with directional arrows
-- [ ] Create basic styling for schematic elements
+- [x] Implement basic SVG canvas
+- [x] Create node rendering logic for different component types
+- [x] Implement connection rendering with directional arrows
+- [x] Create basic styling for schematic elements
+- [x] Add file loading functionality for diagram.json
+
+### Phase 1 Enhancements
+- [ ] Add input/output ports to nodes
+- [ ] Implement drag and drop for JSON file loading
+- [ ] Make the file load controls collapsible/minimizable
+- [ ] Improve text label rendering and positioning
+- [ ] Fix connection endpoints to connect to node ports
 
 ## Phase 2: Interactivity (Week 2)
 

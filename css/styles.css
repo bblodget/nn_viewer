@@ -1,0 +1,137 @@
+/* SchematicViewer Styles */
+
+/* Base styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+header, footer {
+    background-color: #2c3e50;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 0.5rem;
+}
+
+h1 {
+    margin: 0;
+}
+
+main {
+    padding: 1rem;
+    margin-bottom: 3rem;
+}
+
+/* Diagram container */
+#diagram-container {
+    width: 100%;
+    height: 80vh;
+    border: 1px solid #ddd;
+    background-color: white;
+    overflow: hidden;
+    position: relative;
+}
+
+/* SVG styles */
+svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Node styles - will be expanded in Phase 3 */
+.node {
+    stroke: #333;
+    stroke-width: 2px;
+    fill: white;
+}
+
+.node-input {
+    fill: #d1f0ff;
+}
+
+.node-output {
+    fill: #d6ffda;
+}
+
+.node-add, .node-mul {
+    fill: #f9f9f9;
+}
+
+.node-relu2 {
+    fill: #fff4d1;
+}
+
+.node-clamp {
+    fill: #ffd1d1;
+}
+
+/* Connection styles */
+.connection {
+    stroke: #666;
+    stroke-width: 2px;
+    fill: none;
+}
+
+.connection-arrow {
+    fill: #666;
+}
+
+/* Text styles */
+.node-label {
+    font-size: 12px;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+/* Controls section */
+#controls {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#controls label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+#controls button {
+    background-color: #2c3e50;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#controls button:hover {
+    background-color: #1a2530;
+}
+
+#file-input {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-width: 300px;
+}
