@@ -290,14 +290,27 @@ function renderNodes(nodes) {
                 return 'ReLU²';
             } else if (d.type === 'clamp') {
                 return 'clamp';
+            } else if (d.type === 'input' || d.type === 'output') {
+                // For input/output, use label or ID (typically x0, w0, y)
+                return d.label || d.id;
             } else {
                 return d.label || d.type || d.id;
             }
         })
-        // Center text properly in the node
+        // Set vertical position based on node type for perfect alignment
         .attr('x', 0) // Center horizontally (text-anchor: middle handles this)
-        .attr('y', 0) // Center vertically
-        .attr('dy', '0.3em') // Fine-tune vertical alignment
+        .attr('y', d => {
+            // Fine-tune vertical alignment based on node type
+            if (d.type === 'add' || d.type === 'mul') {
+                return -3; // More adjustment for operation symbols
+            } else if (d.type === 'input' || d.type === 'output') {
+                return -2; // More adjustment for IO nodes
+            } else {
+                return -2; // Default adjustment
+            }
+        })
+        // Additional fine-tuning with dy
+        .attr('dy', '0em')
 
     // Add input ports based on node type
     addNodePorts(nodeElements);

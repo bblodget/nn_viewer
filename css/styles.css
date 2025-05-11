@@ -168,11 +168,12 @@ svg {
     fill: #666;
 }
 
-/* Text styles - optimized for crisp rendering and proper centering */
+/* Text styles - optimized for crisp rendering and alignment with ports */
 .node-label {
     font-size: 14px;
     text-anchor: middle; /* Horizontal centering */
-    alignment-baseline: middle; /* Vertical centering - more compatible */
+    dominant-baseline: central; /* Better vertical alignment */
+    alignment-baseline: central; /* Alternative vertical alignment */
     fill: #000;
     font-family: Arial, sans-serif;
     paint-order: stroke;
