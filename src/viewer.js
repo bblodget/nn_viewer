@@ -106,21 +106,21 @@ function setupGridControls() {
             const spacing = parseInt(gridSpacing.value, 10);
             if (!isNaN(spacing)) {
                 gridConfig.spacing.x = spacing;
-
+                
                 // Re-render the grid with new spacing
                 renderGrid();
-
+                
                 // If a diagram is currently displayed, re-render it with new positions
-                if (diagram.selectAll('.node').size() > 0) {
+                if (diagram.selectAll('.primitive').size() > 0) {
                     // Get the current data
-                    const nodes = diagram.selectAll('.node').data();
+                    const primitives = diagram.selectAll('.primitive').data();
                     const connections = diagram.selectAll('.connection').data();
-
+                    
                     // Clear existing content
                     diagram.selectAll('*').remove();
-
+                    
                     // Re-render with new grid spacing
-                    renderNodes(nodes);
+                    renderPrimitives(primitives);
                     renderConnections(connections);
                 }
             }
@@ -263,21 +263,24 @@ function handleFileSelect(event) {
 
 // Validate diagram data
 function isValidDiagramData(data) {
-    // Basic validation - ensure there are nodes and connections
-    if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.connections)) {
+    // Check for primitives array - support both old 'nodes' and new 'primitives' format
+    const primitivesArray = data.primitives || data.nodes;
+    
+    // Basic validation - ensure there are primitives and connections
+    if (!data || !Array.isArray(primitivesArray) || !Array.isArray(data.connections)) {
         return false;
     }
 
-    // Check that nodes have required properties
-    for (const node of data.nodes) {
-        if (!node.id || !node.type || !node.position ||
-            typeof node.position.x !== 'number' ||
-            typeof node.position.y !== 'number') {
+    // Check that primitives have required properties
+    for (const primitive of primitivesArray) {
+        if (!primitive.id || !primitive.type || !primitive.position ||
+            typeof primitive.position.x !== 'number' ||
+            typeof primitive.position.y !== 'number') {
             return false;
         }
 
         // If clock_cycle is provided, ensure it's a number
-        if (node.clock_cycle !== undefined && typeof node.clock_cycle !== 'number') {
+        if (primitive.clock_cycle !== undefined && typeof primitive.clock_cycle !== 'number') {
             return false;
         }
     }
@@ -307,7 +310,7 @@ function initializeSVG() {
         .attr('class', 'grid')
         .attr('transform', 'translate(50, 50)'); // Same initial offset as diagram
 
-    // Add a group for node/connection transformation
+    // Add a group for primitive/connection transformation
     diagram = svg.append('g')
         .attr('class', 'diagram')
         .attr('transform', 'translate(50, 50)'); // Add initial offset for better visibility
@@ -334,9 +337,9 @@ function initializeSVG() {
     // Initialize with a slight offset for better initial view
     svg.call(zoom.transform, d3.zoomIdentity.translate(50, 50).scale(1));
 
-    // Add click handler on SVG background to deselect nodes
+    // Add click handler on SVG background to deselect primitives
     svg.on('click', () => {
-        diagram.selectAll('.node').classed('selected', false);
+        diagram.selectAll('.primitive').classed('selected', false);
         clearHighlights();
     });
 
@@ -344,7 +347,7 @@ function initializeSVG() {
     lineGenerator = d3.line()
         .x(d => d.x)
         .y(d => d.y);
-
+    
     // Render the grid
     renderGrid();
 }
@@ -371,34 +374,37 @@ function renderDiagram(data) {
     // Clear existing content
     diagram.selectAll('*').remove();
     
-    // Phase 1: Basic rendering implementation
-    renderNodes(data.nodes || []);
+    // Get primitives array (support both old 'nodes' and new 'primitives' format)
+    const primitives = data.primitives || data.nodes || [];
+    
+    // Basic rendering implementation
+    renderPrimitives(primitives);
     renderConnections(data.connections || []);
 }
 
-// Render nodes as SVG elements
-function renderNodes(nodes) {
-    // Process the nodes to determine clock cycles if not specified
-    const processedNodes = nodes.map(node => {
-        // Clone the node to avoid modifying the original
-        const processedNode = {...node};
-
-        // If the node doesn't have a clock_cycle, infer it based on position
-        if (processedNode.clock_cycle === undefined) {
+// Render primitives as SVG elements
+function renderPrimitives(primitives) {
+    // Process the primitives to determine clock cycles if not specified
+    const processedPrimitives = primitives.map(primitive => {
+        // Clone the primitive to avoid modifying the original
+        const processedPrimitive = {...primitive};
+        
+        // If the primitive doesn't have a clock_cycle, infer it based on position
+        if (processedPrimitive.clock_cycle === undefined) {
             // Simple heuristic: assign clock cycle based on x position
             // Approximately map x position to clock cycle
-            processedNode.clock_cycle = Math.floor(processedNode.position.x / gridConfig.spacing.x);
+            processedPrimitive.clock_cycle = Math.floor(processedPrimitive.position.x / gridConfig.spacing.x);
         }
-
-        return processedNode;
+        
+        return processedPrimitive;
     });
-
-    const nodeElements = diagram.selectAll('.node')
-        .data(processedNodes)
+    
+    const primitiveElements = diagram.selectAll('.primitive')
+        .data(processedPrimitives)
         .enter()
         .append('g')
-        .attr('class', d => `node node-${d.type}`)
-        .attr('id', d => `node-${d.id}`)
+        .attr('class', d => `primitive primitive-${d.type}`)
+        .attr('id', d => `primitive-${d.id}`)
         .attr('data-clock-cycle', d => d.clock_cycle) // Store clock cycle as data attribute
         .each(function(d) {
             // Calculate position based on clock cycle
@@ -406,9 +412,9 @@ function renderNodes(nodes) {
             d3.select(this).attr('transform', `translate(${pos.x}, ${pos.y})`);
         });
 
-    // Add rectangles for nodes (different shapes can be implemented in Phase 3)
-    nodeElements.append('rect')
-        .attr('class', 'node-body')
+    // Add rectangles for primitives (different shapes can be implemented in Phase 3)
+    primitiveElements.append('rect')
+        .attr('class', 'primitive-body')
         .attr('width', d => d.type === 'input' || d.type === 'output' ? 80 : 60)
         .attr('height', d => d.type === 'input' || d.type === 'output' ? 40 : 60)
         .attr('x', d => d.type === 'input' || d.type === 'output' ? -40 : -30)
@@ -416,13 +422,11 @@ function renderNodes(nodes) {
         .attr('rx', 5)
         .attr('ry', 5);
 
-    // Shadow text removed for clarity
-
-    // Add labels to nodes - positioned precisely for crisp rendering
-    nodeElements.append('text')
-        .attr('class', d => `node-label node-label-${d.type}`)
+    // Add labels to primitives - positioned precisely for crisp rendering
+    primitiveElements.append('text')
+        .attr('class', d => `primitive-label primitive-label-${d.type}`)
         .text(d => {
-            // Format labels based on node type
+            // Format labels based on primitive type
             if (d.type === 'add') {
                 return '+';
             } else if (d.type === 'mul') {
@@ -438,10 +442,10 @@ function renderNodes(nodes) {
                 return d.label || d.type || d.id;
             }
         })
-        // Set vertical position based on node type for perfect alignment
+        // Set vertical position based on primitive type for perfect alignment
         .attr('x', 0) // Center horizontally (text-anchor: middle handles this)
         .attr('y', d => {
-            // Fine-tune vertical alignment based on node type
+            // Fine-tune vertical alignment based on primitive type
             if (d.type === 'add' || d.type === 'mul') {
                 return -3; // More adjustment for operation symbols
             } else if (d.type === 'input' || d.type === 'output') {
@@ -453,20 +457,20 @@ function renderNodes(nodes) {
         // Additional fine-tuning with dy
         .attr('dy', '0em');
 
-    // Add input ports based on node type
-    addNodePorts(nodeElements);
+    // Add input ports based on primitive type
+    addPrimitivePorts(primitiveElements);
 
-    // Add interaction capabilities to nodes
-    nodeElements.on('click', (event, d) => {
+    // Add interaction capabilities to primitives
+    primitiveElements.on('click', (event, d) => {
         event.stopPropagation(); // Prevent propagation to SVG background
 
-        // Toggle selected class on the clicked node
+        // Toggle selected class on the clicked primitive
         const isSelected = d3.select(event.currentTarget).classed('selected');
 
-        // Remove selection from all nodes first
-        diagram.selectAll('.node').classed('selected', false);
+        // Remove selection from all primitives first
+        diagram.selectAll('.primitive').classed('selected', false);
 
-        // If the node wasn't already selected, select it
+        // If the primitive wasn't already selected, select it
         if (!isSelected) {
             d3.select(event.currentTarget).classed('selected', true);
 
@@ -478,28 +482,28 @@ function renderNodes(nodes) {
         }
     });
 
-    // Add tooltip with node details on hover, now including clock cycle
-    nodeElements.append('title')
+    // Add tooltip with primitive details on hover, now including clock cycle
+    primitiveElements.append('title')
         .text(d => `Type: ${d.type}\nID: ${d.id}\nClock Cycle: ${d.clock_cycle}`);
 
-    return nodeElements;
+    return primitiveElements;
 }
 
-// Highlight connections related to a node
-function highlightConnections(nodeId) {
+// Highlight connections related to a primitive
+function highlightConnections(primitiveId) {
     // First, remove all highlights
     clearHighlights();
 
-    // Get the node data
-    const nodeData = diagram.select(`#node-${nodeId}`).datum();
-
-    // Highlight connections where this node is source or target
+    // Get the primitive data
+    const primitiveData = diagram.select(`#primitive-${primitiveId}`).datum();
+    
+    // Highlight connections where this primitive is source or target
     diagram.selectAll('.connection')
-        .classed('highlighted', d => d.source === nodeId || d.target === nodeId);
-
-    // If the node has a clock cycle, highlight that cycle column
-    if (nodeData && nodeData.clock_cycle !== undefined) {
-        highlightClockCycle(nodeData.clock_cycle);
+        .classed('highlighted', d => d.source === primitiveId || d.target === primitiveId);
+    
+    // If the primitive has a clock cycle, highlight that cycle column
+    if (primitiveData && primitiveData.clock_cycle !== undefined) {
+        highlightClockCycle(primitiveData.clock_cycle);
     }
 }
 
@@ -516,83 +520,79 @@ function highlightClockCycle(cycleIndex) {
         .classed('highlighted', (d, i) => i === cycleIndex);
 }
 
-// Add input and output ports to nodes
-function addNodePorts(nodeElements) {
+// Add input and output ports to primitives
+function addPrimitivePorts(primitiveElements) {
     const portRadius = 5;
 
-    // Add ports based on node type
-    nodeElements.each(function(d) {
-        const node = d3.select(this);
-        const nodeType = d.type;
+    // Add ports based on primitive type
+    primitiveElements.each(function(d) {
+        const primitive = d3.select(this);
+        const primitiveType = d.type;
 
-        // Determine the node dimensions
-        const width = nodeType === 'input' || nodeType === 'output' ? 80 : 60;
-        const height = nodeType === 'input' || nodeType === 'output' ? 40 : 60;
-        const xOffset = nodeType === 'input' || nodeType === 'output' ? -40 : -30;
-        const yOffset = nodeType === 'input' || nodeType === 'output' ? -20 : -30;
+        // Determine the primitive dimensions
+        const width = primitiveType === 'input' || primitiveType === 'output' ? 80 : 60;
+        const height = primitiveType === 'input' || primitiveType === 'output' ? 40 : 60;
+        const xOffset = primitiveType === 'input' || primitiveType === 'output' ? -40 : -30;
+        const yOffset = primitiveType === 'input' || primitiveType === 'output' ? -20 : -30;
 
-        // Add ports based on node type
-        if (nodeType === 'input') {
-            // Input nodes only have output ports
-            addOutputPort(node, width + xOffset, 0, d.id, 'out');
+        // Add ports based on primitive type
+        if (primitiveType === 'input') {
+            // Input primitives only have output ports
+            addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
         }
-        else if (nodeType === 'output') {
-            // Output nodes only have input ports
-            addInputPort(node, xOffset, 0, d.id, 'in');
+        else if (primitiveType === 'output') {
+            // Output primitives only have input ports
+            addInputPort(primitive, xOffset, 0, d.id, 'in');
         }
-        else if (nodeType === 'add' || nodeType === 'mul') {
-            // Add nodes have two inputs and one output
-            addInputPort(node, xOffset, -10, d.id, 'in1');
-            addInputPort(node, xOffset, 10, d.id, 'in2');
-            addOutputPort(node, width + xOffset, 0, d.id, 'out');
+        else if (primitiveType === 'add' || primitiveType === 'mul') {
+            // Add primitives have two inputs and one output
+            addInputPort(primitive, xOffset, -10, d.id, 'in1');
+            addInputPort(primitive, xOffset, 10, d.id, 'in2');
+            addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
         }
-        else if (nodeType === 'relu2' || nodeType === 'clamp') {
+        else if (primitiveType === 'relu2' || primitiveType === 'clamp') {
             // ReLU and clamp have one input and one output
-            addInputPort(node, xOffset, 0, d.id, 'in');
-            addOutputPort(node, width + xOffset, 0, d.id, 'out');
+            addInputPort(primitive, xOffset, 0, d.id, 'in');
+            addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
         }
     });
 
-    // Function to add an input port to a node
-    function addInputPort(node, x, y, nodeId, portId) {
+    // Function to add an input port to a primitive
+    function addInputPort(primitive, x, y, primitiveId, portId) {
         // Create a port group to hold the port circle and label
-        const portGroup = node.append('g')
+        const portGroup = primitive.append('g')
             .attr('class', 'port-group');
 
         // Add the port circle
         portGroup.append('circle')
             .attr('class', 'port port-input')
-            .attr('id', `port-${nodeId}-${portId}`)
+            .attr('id', `port-${primitiveId}-${portId}`)
             .attr('cx', x)
             .attr('cy', y)
             .attr('r', portRadius)
             .append('title')
             .text(`Input: ${portId}`);
-
-        // Removed port labels as per feedback
     }
 
-    // Function to add an output port to a node
-    function addOutputPort(node, x, y, nodeId, portId) {
+    // Function to add an output port to a primitive
+    function addOutputPort(primitive, x, y, primitiveId, portId) {
         // Create a port group to hold the port circle and label
-        const portGroup = node.append('g')
+        const portGroup = primitive.append('g')
             .attr('class', 'port-group');
 
         // Add the port circle
         portGroup.append('circle')
             .attr('class', 'port port-output')
-            .attr('id', `port-${nodeId}-${portId}`)
+            .attr('id', `port-${primitiveId}-${portId}`)
             .attr('cx', x)
             .attr('cy', y)
             .attr('r', portRadius)
             .append('title')
             .text(`Output: ${portId}`);
-
-        // Removed output port labels as per feedback
     }
 }
 
-// Render connections between nodes
+// Render connections between primitives
 function renderConnections(connections) {
     // Create connections
     const connectionElements = diagram.selectAll('.connection')
@@ -608,17 +608,17 @@ function renderConnections(connections) {
     return connectionElements;
 }
 
-// Update connection paths based on node positions
+// Update connection paths based on primitive positions
 function updateConnectionPaths(connectionElements) {
     connectionElements.each(function(d) {
         const connection = d3.select(this);
 
-        // Get source and target nodes
-        const sourceNode = d3.select(`#node-${d.source}`);
-        const targetNode = d3.select(`#node-${d.target}`);
+        // Get source and target primitives
+        const sourcePrimitive = d3.select(`#primitive-${d.source}`);
+        const targetPrimitive = d3.select(`#primitive-${d.target}`);
 
-        if (sourceNode.empty() || targetNode.empty()) {
-            console.warn(`Connection ${d.source} -> ${d.target} references non-existent node(s)`);
+        if (sourcePrimitive.empty() || targetPrimitive.empty()) {
+            console.warn(`Connection ${d.source} -> ${d.target} references non-existent primitive(s)`);
             return;
         }
 
@@ -629,16 +629,16 @@ function updateConnectionPaths(connectionElements) {
         if (sourcePort.empty() || targetPort.empty()) {
             console.warn(`Connection ports not found for ${d.source}:${d.sourcePort} -> ${d.target}:${d.targetPort}`);
 
-            // Fall back to using node positions if ports are not found
-            const sourceData = d3.select(sourceNode.node()).datum();
-            const targetData = d3.select(targetNode.node()).datum();
+            // Fall back to using primitive positions if ports are not found
+            const sourceData = d3.select(sourcePrimitive.node()).datum();
+            const targetData = d3.select(targetPrimitive.node()).datum();
 
             if (!sourceData || !targetData) {
                 console.warn(`Connection data not found for ${d.source} -> ${d.target}`);
                 return;
             }
 
-            // Create the path data using the node positions as fallback
+            // Create the path data using the primitive positions as fallback
             const pathData = lineGenerator([
                 { x: sourceData.position.x, y: sourceData.position.y },
                 { x: targetData.position.x, y: targetData.position.y }
@@ -649,8 +649,8 @@ function updateConnectionPaths(connectionElements) {
         }
 
         // Get port positions in global coordinates
-        const sourcePortPos = getPortPosition(sourcePort, sourceNode);
-        const targetPortPos = getPortPosition(targetPort, targetNode);
+        const sourcePortPos = getPortPosition(sourcePort, sourcePrimitive);
+        const targetPortPos = getPortPosition(targetPort, targetPrimitive);
 
         // Create a path with a slight curve
         const dx = targetPortPos.x - sourcePortPos.x;
@@ -678,8 +678,8 @@ function updateConnectionPaths(connectionElements) {
     });
 
     // Helper function to calculate port position in global coordinates
-    function getPortPosition(port, node) {
-        if (port.empty() || node.empty()) {
+    function getPortPosition(port, primitive) {
+        if (port.empty() || primitive.empty()) {
             return { x: 0, y: 0 };
         }
 
@@ -687,8 +687,8 @@ function updateConnectionPaths(connectionElements) {
         const cx = +port.attr('cx');
         const cy = +port.attr('cy');
 
-        // Get the node's transform
-        const transform = getTransform(node);
+        // Get the primitive's transform
+        const transform = getTransform(primitive);
 
         // Return the port's global coordinates
         return {
@@ -754,17 +754,17 @@ function addArrows(connection) {
 function renderGrid() {
     // Clear any existing grid
     gridGroup.selectAll('*').remove();
-
+    
     if (!gridConfig.visible) return;
-
+    
     const container = document.getElementById('diagram-container');
     const width = container.clientWidth;
     const height = container.clientHeight;
-
+    
     // Calculate grid size - add extra to ensure it extends beyond viewport
     const cols = Math.ceil(width / gridConfig.spacing.x) + 5;
     const rows = Math.ceil(height / gridConfig.spacing.y) + 5;
-
+    
     // Create vertical lines for clock cycles
     const verticalLines = gridGroup.selectAll('.grid-line-vertical')
         .data(d3.range(cols))
@@ -777,7 +777,7 @@ function renderGrid() {
         .attr('y2', rows * gridConfig.spacing.y)
         .attr('stroke', gridConfig.color)
         .attr('stroke-width', gridConfig.thickness);
-
+    
     // Create horizontal lines for rows
     const horizontalLines = gridGroup.selectAll('.grid-line-horizontal')
         .data(d3.range(rows))
@@ -790,7 +790,7 @@ function renderGrid() {
         .attr('y2', d => d * gridConfig.spacing.y)
         .attr('stroke', gridConfig.color)
         .attr('stroke-width', gridConfig.thickness);
-
+    
     // Add clock cycle labels
     const clockLabels = gridGroup.selectAll('.clock-cycle-label')
         .data(d3.range(cols))
@@ -805,19 +805,17 @@ function renderGrid() {
         .text(d => `c${d}`);
 }
 
-// Calculate node position based on clock cycle
-function calculateClockCyclePosition(node) {
-    // If the node has a clock_cycle property, use it for x positioning
-    if (node.clock_cycle !== undefined) {
+// Calculate primitive position based on clock cycle
+function calculateClockCyclePosition(primitive) {
+    // If the primitive has a clock_cycle property, use it for x positioning
+    if (primitive.clock_cycle !== undefined) {
         // Keep the original y position, but adjust x based on clock cycle
         return {
-            x: node.clock_cycle * gridConfig.spacing.x + gridConfig.spacing.x / 2,
-            y: node.position.y
+            x: primitive.clock_cycle * gridConfig.spacing.x + gridConfig.spacing.x / 2,
+            y: primitive.position.y
         };
     }
-
+    
     // If no clock_cycle is defined, use the original position
-    return node.position;
+    return primitive.position;
 }
-
-// Helper functions will be added as needed

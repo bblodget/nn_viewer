@@ -5,12 +5,12 @@ This document explains the JSON netlist format used in the SchematicViewer tool 
 ## Overview
 
 The diagram is defined in a JSON file with two main sections:
-- `nodes`: The components in the neural network (inputs, operations, outputs)
+- `primitives` (formerly `nodes`): The basic components in the neural network (inputs, operations, outputs)
 - `connections`: The edges that connect these components
 
-## Node Format
+## Primitive Format
 
-Each node represents a component in the neural network and has the following properties:
+Each primitive represents a basic component in the neural network and has the following properties:
 
 ```json
 {
@@ -26,17 +26,17 @@ Each node represents a component in the neural network and has the following pro
 
 | Property | Description | Required |
 |----------|-------------|----------|
-| `id` | Unique identifier for the node | Yes |
+| `id` | Unique identifier for the primitive | Yes |
 | `type` | The component type (see supported types below) | Yes |
-| `label` | Text to display on the node (defaults to type if not provided) | No |
+| `label` | Text to display on the primitive (defaults to type if not provided) | No |
 | `clock_cycle` | Temporal position (column) in the grid system | No |
-| `position` | X/Y coordinates for positioning the node on the canvas | Yes |
+| `position` | X/Y coordinates for positioning the primitive on the canvas | Yes |
 
-### Node Ports
+### Primitive Ports
 
-Each node type has specific input and output ports that serve as connection points:
+Each primitive type has specific input and output ports that serve as connection points:
 
-| Node Type | Input Ports | Output Ports |
+| Primitive Type | Input Ports | Output Ports |
 |-----------|-------------|--------------|
 | `input` | None | `out` (right side) |
 | `output` | `in` (left side) | None |
@@ -45,9 +45,9 @@ Each node type has specific input and output ports that serve as connection poin
 | `relu2` | `in` (left side) | `out` (right side) |
 | `clamp` | `in` (left side) | `out` (right side) |
 
-### Supported Node Types
+### Supported Primitive Types
 
-The SchematicViewer supports these component types:
+The SchematicViewer supports these basic component types:
 
 | Type | Description | Visual |
 |------|-------------|--------|
@@ -60,12 +60,12 @@ The SchematicViewer supports these component types:
 
 ## Connection Format
 
-Connections represent the edges between nodes and define how data flows through the network:
+Connections represent the edges between primitives and define how data flows through the network:
 
 ```json
 {
-  "source": "source_node_id",
-  "target": "target_node_id",
+  "source": "source_primitive_id",
+  "target": "target_primitive_id",
   "sourcePort": "output_port_name",
   "targetPort": "input_port_name"
 }
@@ -75,16 +75,16 @@ Connections represent the edges between nodes and define how data flows through 
 
 | Property | Description | Required |
 |----------|-------------|----------|
-| `source` | ID of the source node | Yes |
-| `target` | ID of the target node | Yes |
-| `sourcePort` | Name of the output port on the source node (defaults to "out") | No |
-| `targetPort` | Name of the input port on the target node (defaults to "in") | No |
+| `source` | ID of the source primitive | Yes |
+| `target` | ID of the target primitive | Yes |
+| `sourcePort` | Name of the output port on the source primitive (defaults to "out") | No |
+| `targetPort` | Name of the input port on the target primitive (defaults to "in") | No |
 
 ### Port Connections
 
-The `sourcePort` and `targetPort` properties specify which ports to connect between nodes. If these are omitted, the default output port ("out") of the source node will connect to the default input port ("in") of the target node.
+The `sourcePort` and `targetPort` properties specify which ports to connect between primitives. If these are omitted, the default output port ("out") of the source primitive will connect to the default input port ("in") of the target primitive.
 
-For nodes with multiple input ports (like `add` and `mul`), it's recommended to explicitly specify the `targetPort` as either "in1" or "in2" to ensure the connection attaches to the correct input.
+For primitives with multiple input ports (like `add` and `mul`), it's recommended to explicitly specify the `targetPort` as either "in1" or "in2" to ensure the connection attaches to the correct input.
 
 ## Example Diagram
 
@@ -130,10 +130,10 @@ This reflects a common pattern in neural networks: weighted input + bias, follow
 
 To create your own custom neural network diagrams:
 
-1. Follow the node and connection format described above
-2. Position nodes in a visually clear arrangement
-3. Ensure each node has a unique ID
-4. Make sure connections reference valid node IDs
+1. Follow the primitive and connection format described above
+2. Position primitives in a visually clear arrangement
+3. Ensure each primitive has a unique ID
+4. Make sure connections reference valid primitive IDs
 5. Save the file with a `.json` extension
 6. Load it in the SchematicViewer
 
@@ -154,17 +154,17 @@ The SchematicViewer supports interactive features to explore diagrams:
 - **Double-Click**: Reset the view to default zoom level
 - **Drag**: Click and drag on the background to pan the diagram
 
-### Node Selection and Highlighting
-- **Hover Effects**: Hover over nodes and connections to highlight them
-- **Click Selection**: Click on a node to select it and highlight all its connections
+### Primitive Selection and Highlighting
+- **Hover Effects**: Hover over primitives and connections to highlight them
+- **Click Selection**: Click on a primitive to select it and highlight all its connections
 - **Background Click**: Click on the background to deselect everything
 - **Tooltips**: Hover over components to see additional information
 
 ### Grid System
-- **Clock Cycle Alignment**: Nodes are aligned in columns based on their clock cycle
+- **Clock Cycle Alignment**: Primitives are aligned in columns based on their clock cycle
 - **Toggle Grid**: Use the grid controls to show/hide the grid
 - **Adjust Spacing**: Configure the grid spacing using the dropdown menu
-- **Column Highlighting**: When a node is selected, its clock cycle column is highlighted
+- **Column Highlighting**: When a primitive is selected, its clock cycle column is highlighted
 
 ## Hierarchical Structure
 

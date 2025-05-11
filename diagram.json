@@ -1,5 +1,5 @@
 {
-  "nodes": [
+  "primitives": [
     {
       "id": "input1",
       "type": "input",
@@ -24,7 +24,7 @@
       "id": "input3",
       "type": "input",
       "label": "bias",
-      "clock_cycle": 1,
+      "clock_cycle": 0,
       "position": {"x": 250, "y": 250}
     },
     {

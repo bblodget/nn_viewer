@@ -178,8 +178,8 @@ svg {
     pointer-events: none;
 }
 
-/* Node styles - will be expanded in Phase 3 */
-.node {
+/* Primitive styles - will be expanded in Phase 3 */
+.primitive {
     stroke: #333;
     stroke-width: 2px;
     fill: white;
@@ -187,34 +187,34 @@ svg {
     transition: filter 0.2s, stroke-width 0.2s;
 }
 
-.node:hover {
+.primitive:hover {
     stroke-width: 3px;
     filter: brightness(1.05);
 }
 
-.node.selected {
+.primitive.selected {
     stroke: #2c3e50;
     stroke-width: 3px;
     filter: drop-shadow(0 0 3px rgba(0,0,0,0.3));
 }
 
-.node-input {
+.primitive-input {
     fill: #d1f0ff;
 }
 
-.node-output {
+.primitive-output {
     fill: #d6ffda;
 }
 
-.node-add, .node-mul {
+.primitive-add, .primitive-mul {
     fill: #f9f9f9;
 }
 
-.node-relu2 {
+.primitive-relu2 {
     fill: #fff4d1;
 }
 
-.node-clamp {
+.primitive-clamp {
     fill: #ffd1d1;
 }
 
@@ -271,7 +271,7 @@ svg {
 }
 
 /* Text styles - optimized for crisp rendering and alignment with ports */
-.node-label {
+.primitive-label {
     font-size: 14px;
     text-anchor: middle; /* Horizontal centering */
     dominant-baseline: central; /* Better vertical alignment */
@@ -283,16 +283,16 @@ svg {
 }
 
 /* Specific styles - keeping minimal for clarity */
-.node-label-add, .node-label-mul {
+.primitive-label-add, .primitive-label-mul {
     font-size: 24px; /* Much larger for operators */
 }
 
 /* Keep colors simple and high contrast */
-.node-label-input, .node-label-output {
+.primitive-label-input, .primitive-label-output {
     fill: black;
 }
 
-.node-label-relu2, .node-label-clamp {
+.primitive-label-relu2, .primitive-label-clamp {
     fill: black;
 }
 
