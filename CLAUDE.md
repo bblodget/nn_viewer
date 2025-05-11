@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SchematicViewer is a web-based tool for creating and visualizing low-level schematic diagrams of neural network components. It renders interactive diagrams defined in JSON netlist format using D3.js, supporting features like panning, zooming, and node-level inspection.
 
+For detailed information, see the design documents:
+- [Requirements Document](design_docs/requirements.md)
+- [Implementation Plan](design_docs/implementation_plan.md)
+
 ## Architecture
 
 - **Input Format**: JSON netlist containing nodes (components) and connections (edges)
@@ -36,6 +40,8 @@ As this is a frontend web application, development primarily involves:
 To test changes:
 - Open `index.html` in a browser
 - Use browser developer tools to debug
+
+See the [Implementation Plan](design_docs/implementation_plan.md) for the project timeline and development phases.
 
 ## Project Goals
 
