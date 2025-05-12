@@ -4,9 +4,20 @@ A web-based tool for creating and visualizing low-level schematic diagrams of ne
 
 ## Overview
 
-SchematicViewer renders interactive diagrams defined in JSON netlist format using D3.js, providing a clean, schematic-style visualization of neural network internals. Try it online at [https://bblodget.github.io/nn_viewer/](https://bblodget.github.io/nn_viewer/).
+SchematicViewer renders interactive diagrams defined in JSON netlist format using D3.js, providing a clean, schematic-style visualization of neural network internals.
+
+**Note:** This project is a work in progress. See the [Implementation Plan](design_docs/implementation_plan.md) for upcoming features and development status.
 
 ![SchematicViewer Screenshot](screenshots/shot017.png)
+
+## Try it Online
+
+You can try SchematicViewer online at: https://bblodget.github.io/nn_viewer/
+
+For a quick demo:
+1. Download the [sample diagram.json](diagram.json) file from this repository
+2. Drag and drop the file into the online viewer
+3. Explore the neural network component visualization
 
 ## Features
 
@@ -80,14 +91,6 @@ For detailed format documentation, see [Diagram Format](design_docs/diagram_form
 | `clamp` | Range limiter | `in` | `out` |
 | `reg` | Register for clock cycle delay | `in` | `out` |
 
-## Try it Online
-
-You can try SchematicViewer online at: https://bblodget.github.io/nn_viewer/
-
-For a quick demo:
-1. Download the [sample diagram.json](diagram.json) file from this repository
-2. Drag and drop the file into the online viewer
-3. Explore the neural network component visualization
 
 ## Installation
 
@@ -114,6 +117,26 @@ To modify or extend the SchematicViewer:
 4. Use browser dev tools for debugging
 
 See [Implementation Plan](design_docs/implementation_plan.md) for the planned development roadmap.
+
+## Project Status
+
+SchematicViewer is currently under active development. While the core functionality is working, there are several planned enhancements:
+
+- Improved primitive styling and shapes
+- Module-level hierarchical visualization
+- Export capabilities (SVG/PNG)
+- More neural network component types
+- Improved automatic layout for complex diagrams
+
+See the [Implementation Plan](design_docs/implementation_plan.md) for a detailed roadmap and development status.
+
+## Contributing
+
+Contributions are welcome! If you'd like to help improve SchematicViewer, please feel free to:
+- Submit bug reports or feature requests
+- Propose code changes via pull requests
+- Suggest improvements to documentation
+- Create examples of interesting neural network diagrams
 
 ## License
 
