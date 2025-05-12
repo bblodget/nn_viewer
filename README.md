@@ -6,7 +6,7 @@ A web-based tool for creating and visualizing low-level schematic diagrams of ne
 
 SchematicViewer renders interactive diagrams defined in JSON netlist format using D3.js, providing a clean, schematic-style visualization of neural network internals.
 
-![SchematicViewer Screenshot](screenshots/shot016.png)
+![SchematicViewer Screenshot](screenshots/shot017.png)
 
 ## Features
 
