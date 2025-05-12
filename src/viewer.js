@@ -15,7 +15,7 @@ const gridConfig = {
     visible: true,
     spacing: {
         x: 100, // Width of a clock cycle column
-        y: 100  // Base row height (increased from 50 to 100)
+        y: 80   // Base row height (increased from 50 to 80)
     },
     color: '#e0e0e0',
     thickness: 1
