@@ -31,8 +31,9 @@
 - [x] Create basic node selection capability
 - [x] Implement grid system with clock cycle alignment
 
-### JSON Parser & Validator
-- [ ] Create expanded JSON schema for netlists with hierarchical support
+### JSON Format & Parser
+- [x] Create simplified JSON format with automatic positioning
+- [x] Design module-based hierarchical structure in JSON format
 - [x] Implement parser to convert JSON into renderable objects
 - [x] Add validation to ensure netlist integrity
 - [x] Handle error cases gracefully
@@ -40,7 +41,8 @@
 ### Hierarchical Design
 - [x] Update the node model to primitives with clock cycle properties
 - [x] Implement clock cycle-based columnar alignment
-- [ ] Add support for relative positioning between nodes
+- [ ] Add support for relative positioning between primitives
+- [ ] Implement simplified diagram format with automatic positioning
 
 ## Phase 3: Advanced Features (Week 3)
 
@@ -50,17 +52,17 @@
 - [ ] Implement proper text labeling for components
 - [ ] Optimize rendering for performance
 
-### Hierarchical Structure - Compounds
-- [ ] Implement compound node rendering
-- [ ] Create expand/collapse functionality for compounds
-- [ ] Define standard compound node types
-- [ ] Add visual indicators for expandable nodes
+### Hierarchical Structure - Modules
+- [ ] Implement module rendering
+- [ ] Create expand/collapse functionality for modules
+- [ ] Define standard module types
+- [ ] Add visual indicators for expandable modules
 
 ### Enhancements
-- [ ] Implement node inspection on click
-- [ ] Add tooltips with component details
+- [ ] Implement primitive inspection on click
+- [ ] Enhance tooltips with component details
 - [ ] Create basic export functionality (SVG/PNG)
-- [ ] Optimize layout algorithm for complex diagrams
+- [ ] Optimize automatic layout algorithm for complex diagrams
 
 ## Phase 4: Refinement (Week 4)
 
@@ -77,7 +79,8 @@
 - [ ] Performance profiling and optimization
 
 ### Documentation & Examples
-- [ ] Create documentation for hierarchical JSON schema
+- [x] Create documentation for simplified diagram format
+- [x] Document hierarchical JSON schema with modules
 - [ ] Provide example netlists at various hierarchy levels
 - [ ] Add usage instructions for navigation and interaction
 - [ ] Prepare README and contributing guidelines
@@ -98,38 +101,60 @@
 
 ## Implementation Details
 
-### JSON Netlist Structure
+### Simplified JSON Structure
 ```json
-{
-  "nodes": [
-    {
-      "id": "input1",
-      "type": "input",
-      "label": "x0",
-      "position": {"x": 50, "y": 100}
-    },
-    {
-      "id": "mul1",
-      "type": "mul",
-      "position": {"x": 150, "y": 100}
+[
+  {
+    "id": "x0",
+    "type": "input",
+    "label": "x₀"
+  },
+  {
+    "id": "w0",
+    "type": "input",
+    "label": "w₀"
+  },
+  {
+    "id": "mul1",
+    "type": "mul",
+    "inputs": {
+      "in1": "x0.out",
+      "in2": "w0.out"
     }
-  ],
-  "connections": [
-    {
-      "source": "input1",
-      "target": "mul1",
-      "sourcePort": "out",
-      "targetPort": "in1"
+  },
+  {
+    "id": "bias",
+    "type": "input",
+    "label": "bias"
+  },
+  {
+    "id": "reg_bias",
+    "type": "reg",
+    "inputs": { "in": "bias.out" }
+  },
+  {
+    "id": "add1",
+    "type": "add",
+    "inputs": {
+      "in1": "mul1.out",
+      "in2": "reg_bias.out"
     }
-  ]
-}
+  },
+  {
+    "id": "output1",
+    "type": "output",
+    "label": "y",
+    "inputs": { "in": "add1.out" }
+  }
+]
 ```
 
 ### Core Rendering Functions
 1. `parseNetlist(json)` - Process JSON into internal representation
-2. `renderNodes(nodes)` - Create SVG elements for nodes
-3. `renderConnections(connections)` - Draw paths between nodes
-4. `setupInteractions()` - Configure zoom, pan, and click handlers
+2. `renderPrimitives(primitives)` - Create SVG elements for primitives
+3. `renderConnections(connections)` - Draw paths between primitives
+4. `calculateClockCyclePosition(primitive)` - Position primitives based on clock cycles
+5. `setupInteractions()` - Configure zoom, pan, grid, and selection handlers
 
 ### Browser Compatibility
 - Target modern browsers: Chrome, Firefox, Safari, Edge
