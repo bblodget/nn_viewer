@@ -4,7 +4,7 @@ A web-based tool for creating and visualizing low-level schematic diagrams of ne
 
 ## Overview
 
-SchematicViewer renders interactive diagrams defined in JSON netlist format using D3.js, providing a clean, schematic-style visualization of neural network internals.
+SchematicViewer renders interactive diagrams defined in JSON netlist format using D3.js, providing a clean, schematic-style visualization of neural network internals. Try it online at [https://bblodget.github.io/nn_viewer/](https://bblodget.github.io/nn_viewer/).
 
 ![SchematicViewer Screenshot](screenshots/shot017.png)
 
@@ -78,6 +78,10 @@ For detailed format documentation, see [Diagram Format](design_docs/diagram_form
 | `relu2` | Square of ReLU activation | `in` | `out` |
 | `clamp` | Range limiter | `in` | `out` |
 | `reg` | Register for clock cycle delay | `in` | `out` |
+
+## Try it Online
+
+You can try SchematicViewer online at: https://bblodget.github.io/nn_viewer/
 
 ## Installation
 
