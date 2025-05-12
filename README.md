@@ -1,6 +1,6 @@
 # SchematicViewer
 
-A web-based tool for creating and visualizing low-level schematic diagrams of neural network components. 
+A web-based tool for creating and visualizing low-level schematic diagrams of neural network components. Co-developed with [Claude](https://claude.ai), an AI assistant by Anthropic.
 
 ## Overview
 
@@ -109,6 +109,8 @@ No installation required! This is a pure HTML/JavaScript application that runs d
 
 ## Development
 
+SchematicViewer was co-developed with [Claude](https://claude.ai), utilizing Claude Code for AI pair programming. The development process involved collaborative coding, design discussions, and iterative refinement with Claude providing implementation suggestions and helping solve technical challenges.
+
 To modify or extend the SchematicViewer:
 
 1. Edit the HTML/CSS for layout and styling
@@ -122,21 +124,7 @@ See [Implementation Plan](design_docs/implementation_plan.md) for the planned de
 
 SchematicViewer is currently under active development. While the core functionality is working, there are several planned enhancements:
 
-- Improved primitive styling and shapes
-- Module-level hierarchical visualization
-- Export capabilities (SVG/PNG)
-- More neural network component types
-- Improved automatic layout for complex diagrams
-
 See the [Implementation Plan](design_docs/implementation_plan.md) for a detailed roadmap and development status.
-
-## Contributing
-
-Contributions are welcome! If you'd like to help improve SchematicViewer, please feel free to:
-- Submit bug reports or feature requests
-- Propose code changes via pull requests
-- Suggest improvements to documentation
-- Create examples of interesting neural network diagrams
 
 ## License
 
