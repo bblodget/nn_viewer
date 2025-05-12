@@ -19,10 +19,11 @@ SchematicViewer renders interactive diagrams defined in JSON netlist format usin
 
 ## Usage
 
-1. **Open the Application**: Open `index.html` in a web browser
+1. **Open the Application**: Open `index.html` in a web browser (or use the [online version](https://bblodget.github.io/nn_viewer/))
 2. **Load a Diagram**: Either:
    - Click the "File Options" button and select a JSON file
    - Drag and drop a JSON file anywhere onto the diagram area
+   - Use the included [sample diagram.json](diagram.json) to get started
 3. **Interact with the Diagram**:
    - Zoom: Mouse wheel or zoom buttons (+/-)
    - Pan: Click and drag on the background
@@ -82,6 +83,11 @@ For detailed format documentation, see [Diagram Format](design_docs/diagram_form
 ## Try it Online
 
 You can try SchematicViewer online at: https://bblodget.github.io/nn_viewer/
+
+For a quick demo:
+1. Download the [sample diagram.json](diagram.json) file from this repository
+2. Drag and drop the file into the online viewer
+3. Explore the neural network component visualization
 
 ## Installation
 
