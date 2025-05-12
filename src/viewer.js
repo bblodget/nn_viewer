@@ -15,7 +15,7 @@ const gridConfig = {
     visible: true,
     spacing: {
         x: 100, // Width of a clock cycle column
-        y: 50   // Base row height
+        y: 100  // Base row height (increased from 50 to 100)
     },
     color: '#e0e0e0',
     thickness: 1
@@ -261,31 +261,37 @@ function handleFileSelect(event) {
     reader.readAsText(file);
 }
 
-// Validate diagram data
+// Validate diagram data for the simplified format
 function isValidDiagramData(data) {
-    // Basic validation - ensure there are primitives and connections
-    if (!data || !Array.isArray(data.primitives) || !Array.isArray(data.connections)) {
+    // Basic validation - ensure data is an array
+    if (!data || !Array.isArray(data)) {
+        console.error('Diagram data must be an array');
         return false;
     }
 
     // Check that primitives have required properties
-    for (const primitive of data.primitives) {
-        if (!primitive.id || !primitive.type || !primitive.position ||
-            typeof primitive.position.x !== 'number' ||
-            typeof primitive.position.y !== 'number') {
+    for (const primitive of data) {
+        // Every primitive must have id and type properties
+        if (!primitive.id || !primitive.type) {
+            console.error(`Primitive missing required id or type: ${JSON.stringify(primitive)}`);
             return false;
         }
 
-        // If clock_cycle is provided, ensure it's a number
-        if (primitive.clock_cycle !== undefined && typeof primitive.clock_cycle !== 'number') {
+        // All non-input primitives must have inputs defined
+        if (primitive.type !== 'input' && (!primitive.inputs || typeof primitive.inputs !== 'object')) {
+            console.error(`Non-input primitive missing inputs: ${primitive.id}`);
             return false;
         }
-    }
 
-    // Check that connections have required properties
-    for (const connection of data.connections) {
-        if (!connection.source || !connection.target) {
-            return false;
+        // Validate that each input references a valid format (primitiveId.portName)
+        if (primitive.inputs) {
+            for (const [portName, connection] of Object.entries(primitive.inputs)) {
+                // Each connection string should be in format "primitiveId.portName"
+                if (typeof connection !== 'string' || !connection.includes('.')) {
+                    console.error(`Invalid connection format in primitive ${primitive.id}: ${connection}`);
+                    return false;
+                }
+            }
         }
     }
 
@@ -366,35 +372,170 @@ function loadDiagram(url) {
         });
 }
 
+// Calculate the clock cycle (horizontal position) for each primitive
+function determinePrimitiveCycles(primitives) {
+    // Create a map to store the cycle for each primitive
+    const cycles = new Map();
+    // Create a map to store primitives by their IDs for quick lookup
+    const primitivesById = new Map();
+    
+    // First, build the primitives lookup map
+    primitives.forEach(primitive => {
+        primitivesById.set(primitive.id, primitive);
+    });
+    
+    // Function to calculate the cycle for a primitive
+    function calculateCycle(primitive) {
+        // If we've already calculated this primitive's cycle, return it
+        if (cycles.has(primitive.id)) {
+            return cycles.get(primitive.id);
+        }
+        
+        // Input primitives are always at cycle 0
+        if (primitive.type === 'input') {
+            cycles.set(primitive.id, 0);
+            return 0;
+        }
+        
+        // For other primitives, find the maximum cycle of their inputs and add 1
+        let maxInputCycle = -1;
+        
+        // Process all inputs to find the maximum cycle
+        if (primitive.inputs) {
+            for (const [_, connection] of Object.entries(primitive.inputs)) {
+                // Connection format is "primitiveId.portName"
+                const sourcePrimitiveId = connection.split('.')[0];
+                const sourcePrimitive = primitivesById.get(sourcePrimitiveId);
+                
+                if (sourcePrimitive) {
+                    const inputCycle = calculateCycle(sourcePrimitive);
+                    maxInputCycle = Math.max(maxInputCycle, inputCycle);
+                }
+            }
+        }
+        
+        // The primitive's cycle is one more than the maximum input cycle
+        const cycle = maxInputCycle + 1;
+        cycles.set(primitive.id, cycle);
+        return cycle;
+    }
+    
+    // Calculate cycles for all primitives
+    primitives.forEach(primitive => {
+        calculateCycle(primitive);
+    });
+    
+    return cycles;
+}
+
+// Determine the vertical position for each primitive
+function determinePrimitiveRows(primitives, cycles) {
+    // Mixed approach: inputs in sequential rows, others based on average of inputs
+    const yPositions = new Map();
+    const primitivesById = new Map();
+    
+    // Build the primitives lookup map
+    primitives.forEach(primitive => {
+        primitivesById.set(primitive.id, primitive);
+    });
+    
+    // First, position all inputs sequentially
+    const inputPrimitives = primitives.filter(p => p.type === 'input');
+    inputPrimitives.forEach((primitive, index) => {
+        yPositions.set(primitive.id, (index + 1) * gridConfig.spacing.y);
+    });
+    
+    // Function to recursively calculate Y position for non-input primitives
+    function calculateNonInputYPosition(primitive) {
+        // If already calculated, return it
+        if (yPositions.has(primitive.id)) {
+            return yPositions.get(primitive.id);
+        }
+        
+        // If no inputs (should not happen for non-inputs), use default position
+        if (!primitive.inputs) {
+            const yPos = gridConfig.spacing.y;
+            yPositions.set(primitive.id, yPos);
+            return yPos;
+        }
+        
+        // Calculate average Y position of inputs
+        let totalY = 0;
+        let inputCount = 0;
+        
+        for (const [_, connection] of Object.entries(primitive.inputs)) {
+            const sourcePrimitiveId = connection.split('.')[0];
+            const sourcePrimitive = primitivesById.get(sourcePrimitiveId);
+            
+            if (sourcePrimitive) {
+                // Recursively get Y position of input
+                const inputY = yPositions.has(sourcePrimitive.id) 
+                    ? yPositions.get(sourcePrimitive.id)
+                    : calculateNonInputYPosition(sourcePrimitive);
+                
+                totalY += inputY;
+                inputCount++;
+            }
+        }
+        
+        // Calculate average Y
+        const yPos = inputCount > 0 ? totalY / inputCount : gridConfig.spacing.y;
+        yPositions.set(primitive.id, yPos);
+        return yPos;
+    }
+    
+    // Calculate positions for all non-input primitives
+    primitives.filter(p => p.type !== 'input').forEach(primitive => {
+        calculateNonInputYPosition(primitive);
+    });
+    
+    // Convert Y positions to row values
+    const rows = new Map();
+    primitives.forEach(primitive => {
+        rows.set(primitive.id, yPositions.get(primitive.id) / gridConfig.spacing.y);
+    });
+    
+    return rows;
+}
+
 // Render the diagram from parsed JSON
 function renderDiagram(data) {
     // Clear existing content
     diagram.selectAll('*').remove();
 
-    // Basic rendering implementation
-    renderPrimitives(data.primitives);
-    renderConnections(data.connections);
+    // In the simplified format, the data is an array of primitives
+    const primitives = data;
+    
+    // Determine clock cycles (x-positions) for each primitive
+    const cycles = determinePrimitiveCycles(primitives);
+    
+    // Determine row positions (y-positions) for each primitive
+    const rows = determinePrimitiveRows(primitives, cycles);
+    
+    // Add calculated positions to primitives
+    primitives.forEach(primitive => {
+        primitive.clock_cycle = cycles.get(primitive.id);
+        primitive.position = {
+            x: primitive.clock_cycle * gridConfig.spacing.x + gridConfig.spacing.x / 2,
+            y: rows.get(primitive.id) * gridConfig.spacing.y
+        };
+    });
+    
+    // Extract connections from primitives
+    const connections = extractConnections(primitives);
+    
+    // Render the diagram
+    renderPrimitives(primitives);
+    renderConnections(connections);
 }
 
 // Render primitives as SVG elements
 function renderPrimitives(primitives) {
-    // Process the primitives to determine clock cycles if not specified
-    const processedPrimitives = primitives.map(primitive => {
-        // Clone the primitive to avoid modifying the original
-        const processedPrimitive = {...primitive};
-        
-        // If the primitive doesn't have a clock_cycle, infer it based on position
-        if (processedPrimitive.clock_cycle === undefined) {
-            // Simple heuristic: assign clock cycle based on x position
-            // Approximately map x position to clock cycle
-            processedPrimitive.clock_cycle = Math.floor(processedPrimitive.position.x / gridConfig.spacing.x);
-        }
-        
-        return processedPrimitive;
-    });
+    // No need to reprocess primitives as the clock_cycle and position
+    // are already set in the renderDiagram function
     
     const primitiveElements = diagram.selectAll('.primitive')
-        .data(processedPrimitives)
+        .data(primitives)
         .enter()
         .append('g')
         .attr('class', d => `primitive primitive-${d.type}`)
@@ -453,7 +594,7 @@ function renderPrimitives(primitives) {
         // Additional fine-tuning with dy
         .attr('dy', '0em');
 
-    // Add input ports based on primitive type
+    // Add input and output ports to primitives
     addPrimitivePorts(primitiveElements);
 
     // Add interaction capabilities to primitives
@@ -586,6 +727,30 @@ function addPrimitivePorts(primitiveElements) {
             .append('title')
             .text(`Output: ${portId}`);
     }
+}
+
+// Extract connections from primitive inputs
+function extractConnections(primitives) {
+    const connections = [];
+    
+    primitives.forEach(primitive => {
+        if (primitive.inputs) {
+            for (const [targetPort, sourceConnection] of Object.entries(primitive.inputs)) {
+                // Parse the source connection (format: "primitiveId.portName")
+                const [sourcePrimitiveId, sourcePort] = sourceConnection.split('.');
+                
+                // Create a connection object
+                connections.push({
+                    source: sourcePrimitiveId,
+                    target: primitive.id,
+                    sourcePort: sourcePort,
+                    targetPort: targetPort
+                });
+            }
+        }
+    });
+    
+    return connections;
 }
 
 // Render connections between primitives
@@ -801,17 +966,8 @@ function renderGrid() {
         .text(d => `c${d}`);
 }
 
-// Calculate primitive position based on clock cycle
+// Get primitive position (now all primitives have calculated positions)
 function calculateClockCyclePosition(primitive) {
-    // If the primitive has a clock_cycle property, use it for x positioning
-    if (primitive.clock_cycle !== undefined) {
-        // Keep the original y position, but adjust x based on clock cycle
-        return {
-            x: primitive.clock_cycle * gridConfig.spacing.x + gridConfig.spacing.x / 2,
-            y: primitive.position.y
-        };
-    }
-    
-    // If no clock_cycle is defined, use the original position
+    // All primitives now have position calculated in renderDiagram
     return primitive.position;
 }

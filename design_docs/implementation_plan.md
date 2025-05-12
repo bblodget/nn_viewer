@@ -41,8 +41,9 @@
 ### Hierarchical Design
 - [x] Update the node model to primitives with clock cycle properties
 - [x] Implement clock cycle-based columnar alignment
-- [ ] Add support for relative positioning between primitives
-- [ ] Implement simplified diagram format with automatic positioning
+- [x] Add support for relative positioning between primitives
+- [x] Implement simplified diagram format with automatic positioning
+- [x] Implement input row-based and output dependency-based positioning
 
 ## Phase 3: Advanced Features (Week 3)
 
