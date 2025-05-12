@@ -107,4 +107,6 @@ See [Implementation Plan](design_docs/implementation_plan.md) for the planned de
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+Copyright (C) 2025 Brandon Blodget
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details. The full text of the license is available in the [gpl-3.0.md](gpl-3.0.md) file.
