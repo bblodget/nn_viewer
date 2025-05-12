@@ -193,11 +193,11 @@ For cases where the automatic layout needs fine-tuning:
 
 ### Hierarchical Structures
 
-For compound nodes that encapsulate multiple primitives:
+For modules that encapsulate multiple primitives:
 
 ```json
 {
-  "compounds": [
+  "modules": [
     {
       "id": "linear1",
       "type": "linear",

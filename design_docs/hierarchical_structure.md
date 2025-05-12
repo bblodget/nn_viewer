@@ -17,7 +17,7 @@ The SchematicViewer will support a four-level hierarchy that allows representing
   - Fixed number of inputs/outputs
   - Visual representation as a basic schematic symbol
 
-### 2. Compound Nodes
+### 2. Modules
 
 - Collections of primitives that form a functional unit
 - Examples: `quantized_linear`, `attention_head`, `norm_layer`
@@ -30,12 +30,12 @@ The SchematicViewer will support a four-level hierarchy that allows representing
 
 ### 3. Layers
 
-- Collections of compound nodes and/or primitives
+- Collections of modules and/or primitives
 - Examples: `linear_layer`, `conv_layer`, `transformer_layer`
 - Characteristics:
   - Implements a common neural network layer
-  - May contain multiple compound nodes
-  - Defines connections between compounds
+  - May contain multiple modules
+  - Defines connections between modules
   - May have repeated structures
 
 ### 4. Networks
@@ -119,7 +119,7 @@ The JSON format will evolve to support hierarchy:
     }
   ],
   
-  "compounds": [
+  "modules": [
     {
       "id": "linear1",
       "type": "quantized_linear",
@@ -162,7 +162,7 @@ The hierarchical structure will be implemented in phases:
 
 1. **Phase 1**: Basic viewing of primitives (current implementation)
 2. **Phase 2**: Grid system with clock cycle alignment
-3. **Phase 3**: Compound nodes with expand/collapse functionality
+3. **Phase 3**: Modules with expand/collapse functionality
 4. **Phase 4**: Layers and networks
 5. **Phase 5**: Advanced navigation and interaction
 

@@ -216,13 +216,13 @@ SchematicViewer supports a hierarchical representation of neural networks with f
 
 Primitives are the basic building blocks (detailed above).
 
-### 2. Compound Nodes
+### 2. Modules
 
-Compound nodes encapsulate multiple primitives into a reusable functional unit:
+Modules encapsulate multiple primitives into a reusable functional unit:
 
 ```json
 {
-  "compounds": [
+  "modules": [
     {
       "id": "linear1",
       "type": "linear",
@@ -273,7 +273,7 @@ Key features:
 
 ### 3. Layers
 
-Layers group related compound nodes into a functional layer:
+Layers group related modules into a functional layer:
 
 ```json
 {
@@ -287,11 +287,11 @@ Layers group related compound nodes into a functional layer:
       },
       "components": [
         {
-          "ref": "linear1", // Reference to defined compound
+          "ref": "linear1", // Reference to defined module
           "position": { "row": 1 }
         },
         {
-          "ref": "linear1", // Reuse the same compound definition
+          "ref": "linear1", // Reuse the same module definition
           "id": "linear2", // But with a new instance ID
           "position": { "row": 2 }
         }
