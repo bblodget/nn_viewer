@@ -31,6 +31,11 @@ For a quick demo:
 - **Drag & Drop Interface**: Easily load diagram files via drag and drop
 - **Hierarchical Modules**: Support for reusable module definitions with vector inputs
 - **Expandable/Collapsible**: Modules can be expanded to view internal structure
+- **Module Reuse**: Define modules once and reuse them throughout the diagram
+- **Vector Input Support**: Handle arrays of inputs and weights with indexed access
+- **Component Instantiation**: Dynamic creation of internal components from templates
+- **Input Reference Resolution**: Special syntax for module input reference ($.input[index])
+- **Error Handling**: Robust validation and error reporting for module expansion
 
 ## Usage
 
@@ -152,12 +157,17 @@ The SchematicViewer supports hierarchical modules - reusable components that enc
 
 Modules support:
 - Vector inputs/outputs (arrays of connections)
-- Expandable/collapsible views
-- Reusable module definitions
+- Expandable/collapsible views to explore internal structure
+- Reusable module definitions stored in a module registry
+- Special reference syntax for accessing module inputs ($.inputName[index])
+- Internal component instantiation with automatic ID prefixing
+- Proper port mapping for module inputs and outputs
+- Cycle-aware positioning for internal components
+- Error handling and validation for module expansion
 
 For details on creating and using modules, see:
-- [Hierarchical Structure](design_docs/hierarchical_structure.md)
-- [Module Reuse](design_docs/module_reuse.md)
+- [Hierarchical Structure](design_docs/hierarchical_structure.md) - Learn about the hierarchical design approach
+- [Module Reuse](design_docs/module_reuse.md) - Understand how module definitions work
 
 
 ## Installation
