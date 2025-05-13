@@ -178,7 +178,7 @@ svg {
     pointer-events: none;
 }
 
-/* Primitive styles - will be expanded in Phase 3 */
+/* Primitive and module styles */
 .primitive {
     stroke: #333;
     stroke-width: 2px;
@@ -220,6 +220,89 @@ svg {
 
 .primitive-reg {
     fill: #e6d1ff;
+}
+
+/* Module-specific styles */
+.primitive-module {
+    fill: #f0f8ff; /* Light blue background */
+}
+
+.module-body {
+    fill: #f0f8ff;
+    stroke: #3498db;
+    stroke-width: 2px;
+}
+
+.module-title-bar {
+    fill: #3498db;
+    stroke: #3498db;
+    stroke-width: 1px;
+}
+
+.module-label {
+    font-size: 12px;
+    text-anchor: middle;
+    font-weight: bold;
+    fill: white;
+    pointer-events: none;
+}
+
+.module-type-label {
+    font-size: 10px;
+    text-anchor: middle;
+    fill: #555;
+    pointer-events: none;
+}
+
+.module-expand-button {
+    fill: white;
+    stroke: #2980b9;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+
+.module-expand-button:hover {
+    fill: #f0f0f0;
+    stroke-width: 2px;
+}
+
+.module-expand-icon {
+    fill: #2980b9;
+    pointer-events: none;
+}
+
+/* Expanded module styles */
+.primitive.expanded .module-body {
+    fill: #d4e6f7; /* Slightly darker shade when expanded */
+    stroke: #2980b9;
+    stroke-width: 3px;
+}
+
+.primitive.expanded .module-title-bar {
+    fill: #2980b9;
+    stroke: #2980b9;
+}
+
+.primitive.expanded .module-expand-button {
+    fill: #e6f2ff;
+}
+
+/* Module components container */
+.module-components-container {
+    stroke: #3498db;
+    stroke-width: 1px;
+    stroke-dasharray: 4, 2;
+    fill: rgba(245, 250, 255, 0.5);
+    rx: 5;
+    ry: 5;
+}
+
+/* Port label styles for modules */
+.port-label {
+    fill: #555;
+    font-size: 8px;
+    font-family: monospace;
+    pointer-events: none;
 }
 
 /* Port styles */

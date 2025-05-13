@@ -106,55 +106,161 @@ Users will navigate through the hierarchy by:
 
 ## JSON Schema Evolution
 
-The JSON format will evolve to support hierarchy:
+The JSON format will evolve to support hierarchy with reusable module definitions:
 
 ```json
 {
+  "moduleDefinitions": {
+    "quantized_linear": {
+      "inputs": [
+        {"name": "input", "size": 2},
+        {"name": "weight", "size": 2},
+        "bias",
+        "scale"
+      ],
+      "outputs": ["out"],
+      "components": [
+        {
+          "id": "mul0",
+          "type": "mul",
+          "inputs": {
+            "in1": "$.input[0]",
+            "in2": "$.weight[0]"
+          }
+        },
+        {
+          "id": "mul1",
+          "type": "mul",
+          "inputs": {
+            "in1": "$.input[1]",
+            "in2": "$.weight[1]"
+          }
+        },
+        {
+          "id": "add1",
+          "type": "add",
+          "inputs": {
+            "in1": "mul0.out",
+            "in2": "mul1.out"
+          }
+        },
+        // Additional internal components...
+        {
+          "id": "clamp1",
+          "type": "clamp",
+          "inputs": {
+            "in": "mul2.out"
+          }
+        }
+      ],
+      "outputMappings": {
+        "out": "clamp1.out"
+      }
+    }
+  },
+
   "primitives": [
     {
-      "id": "mul1",
-      "type": "mul",
-      "clock_cycle": 1,
-      "position": {"x": 100, "y": 100}
+      "id": "input1",
+      "type": "input",
+      "label": "x₀"
     }
   ],
-  
+
   "modules": [
     {
       "id": "linear1",
       "type": "quantized_linear",
-      "clock_cycle": 1,
-      "position": {"x": 200, "y": 100},
-      "components": ["mul1", "add1", "clamp1"],
-      "connections": [
-        {"source": "mul1", "target": "add1"}
-      ]
+      "label": "Linear Unit 1",
+      "inputs": {
+        "input": ["x0.out", "x1.out"],
+        "weight": ["w0.out", "w1.out"],
+        "bias": "bias.out",
+        "scale": "scale.out"
+      }
+    },
+    {
+      "id": "linear2",
+      "type": "quantized_linear",
+      "label": "Linear Unit 2",
+      "inputs": {
+        "input": ["x2.out", "x3.out"],
+        "weight": ["w2.out", "w3.out"],
+        "bias": "bias.out",
+        "scale": "scale.out"
+      }
     }
   ],
-  
+
   "layers": [
     {
       "id": "layer1",
       "type": "linear_block",
       "components": ["linear1", "linear2"],
       "connections": [
-        {"source": "linear1", "target": "linear2"}
+        {"source": "linear1.out", "target": "linear2.input"}
       ]
     }
   ],
-  
+
   "networks": [
     {
       "id": "network1",
       "type": "mlp",
       "components": ["layer1", "layer2"],
       "connections": [
-        {"source": "layer1", "target": "layer2"}
+        {"source": "layer1.out", "target": "layer2.input"}
       ]
     }
   ]
 }
 ```
+
+### Module Definition Format
+
+The `moduleDefinitions` section defines reusable module templates that can be instantiated multiple times:
+
+1. **Module Type Name**: Each module definition is keyed by its type name (e.g., "quantized_linear")
+2. **Inputs/Outputs**: Lists the expected input and output ports for the module
+3. **Components**: Internal components that make up the module
+4. **Input References**: Use `$.portName` syntax to reference module inputs
+5. **Output Mappings**: Maps internal component outputs to module output ports
+
+### Vector Input Support
+
+For modules that require vector inputs (such as multiple input values or weights):
+
+1. **Input Definition**: Use the object format to specify vector inputs with a size:
+   ```json
+   {"name": "input", "size": 2}
+   ```
+
+2. **Vector Access**: Access vector elements using array indexing syntax:
+   ```json
+   "$.input[0]"  // First element
+   "$.input[1]"  // Second element
+   ```
+
+3. **Scalar Inputs**: For simplicity, scalar inputs can use the string shorthand:
+   ```json
+   "bias"  // Equivalent to {"name": "bias", "size": 1}
+   ```
+
+4. **Module Instantiation**: Provide arrays for vector inputs:
+   ```json
+   "input": ["x0.out", "x1.out"]
+   ```
+
+### Module Instance Format
+
+When creating a module instance, you only need to specify:
+
+1. **ID**: Unique identifier for this instance
+2. **Type**: References a module definition
+3. **Label**: Optional display name
+4. **Inputs**: Maps module input ports to connections in the diagram
+
+The system will automatically create the internal components and connections based on the module definition template, with proper scoping of component IDs to avoid conflicts.
 
 ## Implementation Phasing
 

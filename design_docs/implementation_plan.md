@@ -48,16 +48,25 @@
 ## Phase 3: Advanced Features (Week 3)
 
 ### Primitive Types & Styling
-- [ ] Complete implementation of all required primitive types
-- [ ] Add distinct visual styling for each primitive type
-- [ ] Implement proper text labeling for components
+- [x] Complete implementation of all required primitive types
+- [x] Add distinct visual styling for each primitive type
+- [x] Implement proper text labeling for components
 - [ ] Optimize rendering for performance
 
 ### Hierarchical Structure - Modules
-- [ ] Implement module rendering
-- [ ] Create expand/collapse functionality for modules
-- [ ] Define standard module types
-- [ ] Add visual indicators for expandable modules
+- [x] Implement module rendering
+- [x] Create basic expand/collapse functionality for modules
+- [x] Define standard module types
+- [x] Add visual indicators for expandable modules
+
+### Module Reuse System
+- [ ] Implement module definitions registry
+- [ ] Create component instantiation from definitions
+- [ ] Support reference syntax for input/output mappings
+- [ ] Support vector input/output with array syntax
+- [ ] Dynamic component ID generation to avoid conflicts
+- [ ] Support module instance expansion with template components
+- [x] Create example JSON files in dedicated /json directory
 
 ### Enhancements
 - [ ] Implement primitive inspection on click

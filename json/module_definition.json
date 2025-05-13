@@ -1,0 +1,166 @@
+{
+  "moduleDefinitions": {
+    "quantized_linear": {
+      "inputs": [
+        {"name": "input", "size": 2},
+        {"name": "weight", "size": 2},
+        "bias",
+        "scale"
+      ],
+      "outputs": ["out"],
+      "components": [
+        {
+          "id": "mul0",
+          "type": "mul",
+          "inputs": {
+            "in1": "$.input[0]",
+            "in2": "$.weight[0]"
+          }
+        },
+        {
+          "id": "mul1",
+          "type": "mul",
+          "inputs": {
+            "in1": "$.input[1]",
+            "in2": "$.weight[1]"
+          }
+        },
+        {
+          "id": "add1",
+          "type": "add",
+          "inputs": {
+            "in1": "mul0.out",
+            "in2": "mul1.out"
+          }
+        },
+        {
+          "id": "reg_bias1",
+          "type": "reg",
+          "inputs": {
+            "in": "bias.out"
+          }
+        },
+        {
+          "id": "reg_bias2",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_bias1.out"
+          }
+        },
+        {
+          "id": "add2",
+          "type": "add",
+          "inputs": {
+            "in1": "add1.out",
+            "in2": "reg_bias2.out"
+          }
+        },
+        {
+          "id": "relu1",
+          "type": "relu2",
+          "inputs": {
+            "in": "add2.out"
+          }
+        },
+        {
+          "id": "reg_scale1",
+          "type": "reg",
+          "inputs": {
+            "in": "scale.out"
+          }
+        },
+        {
+          "id": "reg_scale2",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_scale1.out"
+          }
+        },
+        {
+          "id": "reg_scale3",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_scale2.out"
+          }
+        },
+        {
+          "id": "reg_scale4",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_scale3.out"
+          }
+        },
+        {
+          "id": "mul2",
+          "type": "mul",
+          "inputs": {
+            "in1": "relu1.out",
+            "in2": "reg_scale4.out"
+          }
+        },
+        {
+          "id": "clamp1",
+          "type": "clamp",
+          "inputs": {
+            "in": "mul2.out"
+          }
+        }
+      ],
+      "outputMappings": {
+        "out": "clamp1.out"
+      }
+    }
+  },
+  "elements": [
+    {
+      "id": "x0",
+      "type": "input",
+      "label": "x₀"
+    },
+    {
+      "id": "w0",
+      "type": "input",
+      "label": "w₀"
+    },
+    {
+      "id": "x1",
+      "type": "input",
+      "label": "x₁"
+    },
+    {
+      "id": "w1",
+      "type": "input",
+      "label": "w₁"
+    },
+    {
+      "id": "bias",
+      "type": "input",
+      "label": "bias"
+    },
+    {
+      "id": "scale",
+      "type": "input",
+      "label": "scale"
+    },
+    {
+      "id": "linear1",
+      "type": "module",
+      "moduleType": "quantized_linear",
+      "label": "Linear Unit 1",
+      "inputs": {
+        "input": ["x0.out", "x1.out"],
+        "weight": ["w0.out", "w1.out"],
+        "bias": "bias.out",
+        "scale": "scale.out"
+      }
+    },
+    {
+      "id": "output1",
+      "type": "output",
+      "label": "y",
+      "inputs": {
+        "in": "linear1.out"
+      }
+    }
+  ]
+}

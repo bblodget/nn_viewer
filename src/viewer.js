@@ -40,20 +40,45 @@ function showUploadPrompt() {
     // Add a text message in the center of the diagram
     diagram.append('text')
         .attr('x', 400)
-        .attr('y', 200)
+        .attr('y', 180)
         .attr('text-anchor', 'middle')
         .style('font-size', '20px')
         .style('fill', '#666')
-        .text('Please upload a diagram.json file to begin');
+        .text('Please upload a diagram JSON file to begin');
 
     // Add additional instructions
     diagram.append('text')
         .attr('x', 400)
-        .attr('y', 230)
+        .attr('y', 210)
         .attr('text-anchor', 'middle')
         .style('font-size', '16px')
         .style('fill', '#888')
         .text('Use the file input or drag & drop a JSON file anywhere');
+
+    // Add example file suggestions
+    diagram.append('text')
+        .attr('x', 400)
+        .attr('y', 240)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '14px')
+        .style('fill', '#888')
+        .text('Example files in the /json directory:');
+
+    diagram.append('text')
+        .attr('x', 400)
+        .attr('y', 260)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '14px')
+        .style('fill', '#3498db')
+        .text('primitives_only.json - Simple primitives diagram');
+
+    diagram.append('text')
+        .attr('x', 400)
+        .attr('y', 280)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '14px')
+        .style('fill', '#3498db')
+        .text('module_definition.json - Advanced module-based diagram');
 }
 
 // Set up event listeners for controls
@@ -261,7 +286,7 @@ function handleFileSelect(event) {
     reader.readAsText(file);
 }
 
-// Validate diagram data for the simplified format
+// Validate diagram data for the simplified format with module support
 function isValidDiagramData(data) {
     // Basic validation - ensure data is an array
     if (!data || !Array.isArray(data)) {
@@ -269,27 +294,83 @@ function isValidDiagramData(data) {
         return false;
     }
 
-    // Check that primitives have required properties
-    for (const primitive of data) {
-        // Every primitive must have id and type properties
-        if (!primitive.id || !primitive.type) {
-            console.error(`Primitive missing required id or type: ${JSON.stringify(primitive)}`);
+    // Check that primitives and modules have required properties
+    for (const element of data) {
+        // Every element must have id and type properties
+        if (!element.id || !element.type) {
+            console.error(`Element missing required id or type: ${JSON.stringify(element)}`);
             return false;
         }
 
-        // All non-input primitives must have inputs defined
-        if (primitive.type !== 'input' && (!primitive.inputs || typeof primitive.inputs !== 'object')) {
-            console.error(`Non-input primitive missing inputs: ${primitive.id}`);
-            return false;
-        }
+        // If element is a module, validate its module-specific properties
+        if (element.type === 'module') {
+            // Modules must have a moduleType
+            if (!element.moduleType) {
+                console.error(`Module ${element.id} is missing required moduleType property`);
+                return false;
+            }
 
-        // Validate that each input references a valid format (primitiveId.portName)
-        if (primitive.inputs) {
-            for (const [portName, connection] of Object.entries(primitive.inputs)) {
-                // Each connection string should be in format "primitiveId.portName"
-                if (typeof connection !== 'string' || !connection.includes('.')) {
-                    console.error(`Invalid connection format in primitive ${primitive.id}: ${connection}`);
+            // Modules must have components array
+            if (!element.components || !Array.isArray(element.components)) {
+                console.error(`Module ${element.id} is missing required components array`);
+                return false;
+            }
+
+            // Validate module components
+            for (const component of element.components) {
+                if (!component.id || !component.type) {
+                    console.error(`Module component missing required id or type: ${JSON.stringify(component)}`);
                     return false;
+                }
+
+                // All non-input components must have inputs defined
+                if (component.type !== 'input' && (!component.inputs || typeof component.inputs !== 'object')) {
+                    console.error(`Non-input component missing inputs: ${component.id}`);
+                    return false;
+                }
+
+                // Validate component inputs
+                if (component.inputs) {
+                    for (const [portName, connection] of Object.entries(component.inputs)) {
+                        // Each connection string should be in format "primitiveId.portName" or "moduleId.portName"
+                        if (typeof connection !== 'string' || !connection.includes('.')) {
+                            console.error(`Invalid connection format in component ${component.id}: ${connection}`);
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            // Modules must have outputs defined
+            if (!element.outputs || typeof element.outputs !== 'object') {
+                console.error(`Module ${element.id} is missing required outputs object`);
+                return false;
+            }
+
+            // Validate output connections
+            for (const [portName, connection] of Object.entries(element.outputs)) {
+                if (typeof connection !== 'string' || !connection.includes('.')) {
+                    console.error(`Invalid output connection format in module ${element.id}: ${connection}`);
+                    return false;
+                }
+            }
+        }
+        // For primitives and regular elements
+        else {
+            // All non-input primitives must have inputs defined
+            if (element.type !== 'input' && (!element.inputs || typeof element.inputs !== 'object')) {
+                console.error(`Non-input primitive missing inputs: ${element.id}`);
+                return false;
+            }
+
+            // Validate that each input references a valid format (elementId.portName)
+            if (element.inputs) {
+                for (const [portName, connection] of Object.entries(element.inputs)) {
+                    // Each connection string should be in format "elementId.portName"
+                    if (typeof connection !== 'string' || !connection.includes('.')) {
+                        console.error(`Invalid connection format in element ${element.id}: ${connection}`);
+                        return false;
+                    }
                 }
             }
         }
@@ -372,129 +453,192 @@ function loadDiagram(url) {
         });
 }
 
-// Calculate the clock cycle (horizontal position) for each primitive
-function determinePrimitiveCycles(primitives) {
-    // Create a map to store the cycle for each primitive
+// Calculate the clock cycle (horizontal position) for each element (primitive or module)
+function determinePrimitiveCycles(elements) {
+    // Create a map to store the cycle for each element
     const cycles = new Map();
-    // Create a map to store primitives by their IDs for quick lookup
-    const primitivesById = new Map();
-    
-    // First, build the primitives lookup map
-    primitives.forEach(primitive => {
-        primitivesById.set(primitive.id, primitive);
+    // Create a map to store elements by their IDs for quick lookup
+    const elementsById = new Map();
+
+    // First, build the elements lookup map (including both primitives and modules)
+    elements.forEach(element => {
+        elementsById.set(element.id, element);
     });
-    
-    // Function to calculate the cycle for a primitive
-    function calculateCycle(primitive) {
-        // If we've already calculated this primitive's cycle, return it
-        if (cycles.has(primitive.id)) {
-            return cycles.get(primitive.id);
+
+    // Function to calculate the cycle for an element
+    function calculateCycle(element) {
+        // If we've already calculated this element's cycle, return it
+        if (cycles.has(element.id)) {
+            return cycles.get(element.id);
         }
-        
-        // Input primitives are always at cycle 0
-        if (primitive.type === 'input') {
-            cycles.set(primitive.id, 0);
+
+        // Input elements are always at cycle 0
+        if (element.type === 'input') {
+            cycles.set(element.id, 0);
             return 0;
         }
-        
-        // For other primitives, find the maximum cycle of their inputs and add 1
+
+        // For modules, we need to handle their special structure
+        if (element.type === 'module') {
+            let maxInputCycle = -1;
+
+            // Process all module inputs to find the maximum cycle
+            if (element.inputs) {
+                for (const [_, connection] of Object.entries(element.inputs)) {
+                    // Connection format is "elementId.portName"
+                    const sourceElementId = connection.split('.')[0];
+                    const sourceElement = elementsById.get(sourceElementId);
+
+                    if (sourceElement) {
+                        const inputCycle = calculateCycle(sourceElement);
+                        maxInputCycle = Math.max(maxInputCycle, inputCycle);
+                    }
+                }
+            }
+
+            // The module's cycle is one more than the maximum input cycle
+            const cycle = maxInputCycle + 1;
+            cycles.set(element.id, cycle);
+
+            // For collapsed view, we don't need to calculate cycles for internal components
+            // When expanded, we would need to handle internal component positioning differently
+
+            return cycle;
+        }
+
+        // For regular primitives, find the maximum cycle of their inputs and add 1
         let maxInputCycle = -1;
-        
+
         // Process all inputs to find the maximum cycle
-        if (primitive.inputs) {
-            for (const [_, connection] of Object.entries(primitive.inputs)) {
-                // Connection format is "primitiveId.portName"
-                const sourcePrimitiveId = connection.split('.')[0];
-                const sourcePrimitive = primitivesById.get(sourcePrimitiveId);
-                
-                if (sourcePrimitive) {
-                    const inputCycle = calculateCycle(sourcePrimitive);
+        if (element.inputs) {
+            for (const [_, connection] of Object.entries(element.inputs)) {
+                // Connection format is "elementId.portName"
+                const sourceElementId = connection.split('.')[0];
+                const sourceElement = elementsById.get(sourceElementId);
+
+                if (sourceElement) {
+                    const inputCycle = calculateCycle(sourceElement);
                     maxInputCycle = Math.max(maxInputCycle, inputCycle);
                 }
             }
         }
-        
-        // The primitive's cycle is one more than the maximum input cycle
+
+        // The element's cycle is one more than the maximum input cycle
         const cycle = maxInputCycle + 1;
-        cycles.set(primitive.id, cycle);
+        cycles.set(element.id, cycle);
         return cycle;
     }
-    
-    // Calculate cycles for all primitives
-    primitives.forEach(primitive => {
-        calculateCycle(primitive);
+
+    // Calculate cycles for all elements
+    elements.forEach(element => {
+        calculateCycle(element);
     });
-    
+
     return cycles;
 }
 
-// Determine the vertical position for each primitive
-function determinePrimitiveRows(primitives, cycles) {
+// Determine the vertical position for each element (primitive or module)
+function determinePrimitiveRows(elements, cycles) {
     // Mixed approach: inputs in sequential rows, others based on average of inputs
     const yPositions = new Map();
-    const primitivesById = new Map();
-    
-    // Build the primitives lookup map
-    primitives.forEach(primitive => {
-        primitivesById.set(primitive.id, primitive);
+    const elementsById = new Map();
+
+    // Build the elements lookup map (including both primitives and modules)
+    elements.forEach(element => {
+        elementsById.set(element.id, element);
     });
-    
+
     // First, position all inputs sequentially
-    const inputPrimitives = primitives.filter(p => p.type === 'input');
-    inputPrimitives.forEach((primitive, index) => {
-        yPositions.set(primitive.id, (index + 1) * gridConfig.spacing.y);
+    const inputElements = elements.filter(e => e.type === 'input');
+    inputElements.forEach((element, index) => {
+        yPositions.set(element.id, (index + 1) * gridConfig.spacing.y);
     });
-    
-    // Function to recursively calculate Y position for non-input primitives
-    function calculateNonInputYPosition(primitive) {
+
+    // Function to recursively calculate Y position for non-input elements
+    function calculateNonInputYPosition(element) {
         // If already calculated, return it
-        if (yPositions.has(primitive.id)) {
-            return yPositions.get(primitive.id);
+        if (yPositions.has(element.id)) {
+            return yPositions.get(element.id);
         }
-        
-        // If no inputs (should not happen for non-inputs), use default position
-        if (!primitive.inputs) {
-            const yPos = gridConfig.spacing.y;
-            yPositions.set(primitive.id, yPos);
+
+        // For modules, special handling for vertical positioning
+        if (element.type === 'module') {
+            // If no inputs (should not happen for modules), use default position
+            if (!element.inputs) {
+                const yPos = gridConfig.spacing.y;
+                yPositions.set(element.id, yPos);
+                return yPos;
+            }
+
+            // Calculate average Y position of inputs
+            let totalY = 0;
+            let inputCount = 0;
+
+            for (const [_, connection] of Object.entries(element.inputs)) {
+                const sourceElementId = connection.split('.')[0];
+                const sourceElement = elementsById.get(sourceElementId);
+
+                if (sourceElement) {
+                    // Recursively get Y position of input
+                    const inputY = yPositions.has(sourceElement.id)
+                        ? yPositions.get(sourceElement.id)
+                        : calculateNonInputYPosition(sourceElement);
+
+                    totalY += inputY;
+                    inputCount++;
+                }
+            }
+
+            // Modules should be given more vertical space
+            const yPos = inputCount > 0 ? totalY / inputCount : gridConfig.spacing.y;
+            yPositions.set(element.id, yPos);
             return yPos;
         }
-        
+
+        // Regular primitives (non-module, non-input)
+        // If no inputs (should not happen for non-inputs), use default position
+        if (!element.inputs) {
+            const yPos = gridConfig.spacing.y;
+            yPositions.set(element.id, yPos);
+            return yPos;
+        }
+
         // Calculate average Y position of inputs
         let totalY = 0;
         let inputCount = 0;
-        
-        for (const [_, connection] of Object.entries(primitive.inputs)) {
-            const sourcePrimitiveId = connection.split('.')[0];
-            const sourcePrimitive = primitivesById.get(sourcePrimitiveId);
-            
-            if (sourcePrimitive) {
+
+        for (const [_, connection] of Object.entries(element.inputs)) {
+            const sourceElementId = connection.split('.')[0];
+            const sourceElement = elementsById.get(sourceElementId);
+
+            if (sourceElement) {
                 // Recursively get Y position of input
-                const inputY = yPositions.has(sourcePrimitive.id) 
-                    ? yPositions.get(sourcePrimitive.id)
-                    : calculateNonInputYPosition(sourcePrimitive);
-                
+                const inputY = yPositions.has(sourceElement.id)
+                    ? yPositions.get(sourceElement.id)
+                    : calculateNonInputYPosition(sourceElement);
+
                 totalY += inputY;
                 inputCount++;
             }
         }
-        
+
         // Calculate average Y
         const yPos = inputCount > 0 ? totalY / inputCount : gridConfig.spacing.y;
-        yPositions.set(primitive.id, yPos);
+        yPositions.set(element.id, yPos);
         return yPos;
     }
-    
-    // Calculate positions for all non-input primitives
-    primitives.filter(p => p.type !== 'input').forEach(primitive => {
-        calculateNonInputYPosition(primitive);
+
+    // Calculate positions for all non-input elements
+    elements.filter(e => e.type !== 'input').forEach(element => {
+        calculateNonInputYPosition(element);
     });
-    
+
     // Convert Y positions to row values
     const rows = new Map();
-    primitives.forEach(primitive => {
-        rows.set(primitive.id, yPositions.get(primitive.id) / gridConfig.spacing.y);
+    elements.forEach(element => {
+        rows.set(element.id, yPositions.get(element.id) / gridConfig.spacing.y);
     });
-    
+
     return rows;
 }
 
@@ -529,40 +673,117 @@ function renderDiagram(data) {
     renderConnections(connections);
 }
 
-// Render primitives as SVG elements
-function renderPrimitives(primitives) {
-    // No need to reprocess primitives as the clock_cycle and position
+// Render primitives and modules as SVG elements
+function renderPrimitives(elements) {
+    // No need to reprocess elements as the clock_cycle and position
     // are already set in the renderDiagram function
-    
-    const primitiveElements = diagram.selectAll('.primitive')
-        .data(primitives)
+
+    const elementElements = diagram.selectAll('.primitive')
+        .data(elements)
         .enter()
         .append('g')
         .attr('class', d => `primitive primitive-${d.type}`)
         .attr('id', d => `primitive-${d.id}`)
         .attr('data-clock-cycle', d => d.clock_cycle) // Store clock cycle as data attribute
+        .attr('data-is-module', d => d.type === 'module') // Mark modules for special handling
         .each(function(d) {
             // Calculate position based on clock cycle
             const pos = calculateClockCyclePosition(d);
             d3.select(this).attr('transform', `translate(${pos.x}, ${pos.y})`);
         });
 
-    // Add rectangles for primitives (different shapes can be implemented in Phase 3)
-    primitiveElements.append('rect')
-        .attr('class', 'primitive-body')
-        .attr('width', d => d.type === 'input' || d.type === 'output' ? 80 : 60)
-        .attr('height', d => d.type === 'input' || d.type === 'output' ? 40 : 60)
-        .attr('x', d => d.type === 'input' || d.type === 'output' ? -40 : -30)
-        .attr('y', d => d.type === 'input' || d.type === 'output' ? -20 : -30)
-        .attr('rx', 5)
-        .attr('ry', 5);
+    // Add rectangles for primitives and modules with different styling
+    elementElements.append('rect')
+        .attr('class', d => d.type === 'module' ? 'module-body' : 'primitive-body')
+        .attr('width', d => {
+            if (d.type === 'module') {
+                return 120; // Modules are larger
+            } else if (d.type === 'input' || d.type === 'output') {
+                return 80;
+            } else {
+                return 60;
+            }
+        })
+        .attr('height', d => {
+            if (d.type === 'module') {
+                return 80; // Modules are taller
+            } else if (d.type === 'input' || d.type === 'output') {
+                return 40;
+            } else {
+                return 60;
+            }
+        })
+        .attr('x', d => {
+            if (d.type === 'module') {
+                return -60; // Center the module
+            } else if (d.type === 'input' || d.type === 'output') {
+                return -40;
+            } else {
+                return -30;
+            }
+        })
+        .attr('y', d => {
+            if (d.type === 'module') {
+                return -40; // Center the module
+            } else if (d.type === 'input' || d.type === 'output') {
+                return -20;
+            } else {
+                return -30;
+            }
+        })
+        .attr('rx', d => d.type === 'module' ? 8 : 5) // More rounded corners for modules
+        .attr('ry', d => d.type === 'module' ? 8 : 5);
 
-    // Add labels to primitives - positioned precisely for crisp rendering
-    primitiveElements.append('text')
-        .attr('class', d => `primitive-label primitive-label-${d.type}`)
+    // Add title bar for modules
+    elementElements.filter(d => d.type === 'module')
+        .append('rect')
+        .attr('class', 'module-title-bar')
+        .attr('width', 120)
+        .attr('height', 20)
+        .attr('x', -60)
+        .attr('y', -40)
+        .attr('rx', 8)
+        .attr('ry', 8);
+
+    // Add expand/collapse button for modules
+    elementElements.filter(d => d.type === 'module')
+        .append('circle')
+        .attr('class', 'module-expand-button')
+        .attr('cx', 50)
+        .attr('cy', -30)
+        .attr('r', 6)
+        .on('click', (event, d) => {
+            event.stopPropagation(); // Prevent propagation to module
+            toggleModuleExpansion(d.id);
+        });
+
+    // Add plus symbol to the expand button
+    elementElements.filter(d => d.type === 'module')
+        .append('text')
+        .attr('class', 'module-expand-icon')
+        .attr('x', 50)
+        .attr('y', -27)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '12px')
+        .attr('font-weight', 'bold')
+        .text('+');
+
+    // Add labels to elements - positioned precisely for crisp rendering
+    elementElements.append('text')
+        .attr('class', d => {
+            if (d.type === 'module') {
+                return 'module-label';
+            } else {
+                return `primitive-label primitive-label-${d.type}`;
+            }
+        })
         .text(d => {
+            // For modules, use the label or module type
+            if (d.type === 'module') {
+                return d.label || d.moduleType || d.id;
+            }
             // Format labels based on primitive type
-            if (d.type === 'add') {
+            else if (d.type === 'add') {
                 return '+';
             } else if (d.type === 'mul') {
                 return '×';
@@ -579,11 +800,12 @@ function renderPrimitives(primitives) {
                 return d.label || d.type || d.id;
             }
         })
-        // Set vertical position based on primitive type for perfect alignment
+        // Set vertical position based on element type for perfect alignment
         .attr('x', 0) // Center horizontally (text-anchor: middle handles this)
         .attr('y', d => {
-            // Fine-tune vertical alignment based on primitive type
-            if (d.type === 'add' || d.type === 'mul') {
+            if (d.type === 'module') {
+                return -25; // Position in the title bar for modules
+            } else if (d.type === 'add' || d.type === 'mul') {
                 return -3; // More adjustment for operation symbols
             } else if (d.type === 'input' || d.type === 'output') {
                 return -2; // More adjustment for IO nodes
@@ -594,20 +816,30 @@ function renderPrimitives(primitives) {
         // Additional fine-tuning with dy
         .attr('dy', '0em');
 
-    // Add input and output ports to primitives
-    addPrimitivePorts(primitiveElements);
+    // Add module type label for modules
+    elementElements.filter(d => d.type === 'module')
+        .append('text')
+        .attr('class', 'module-type-label')
+        .attr('x', 0)
+        .attr('y', 10)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '10px')
+        .text(d => d.moduleType || '');
 
-    // Add interaction capabilities to primitives
-    primitiveElements.on('click', (event, d) => {
+    // Add input and output ports to elements (primitives and modules)
+    addPrimitivePorts(elementElements);
+
+    // Add interaction capabilities to elements
+    elementElements.on('click', (event, d) => {
         event.stopPropagation(); // Prevent propagation to SVG background
 
-        // Toggle selected class on the clicked primitive
+        // Toggle selected class on the clicked element
         const isSelected = d3.select(event.currentTarget).classed('selected');
 
-        // Remove selection from all primitives first
+        // Remove selection from all elements first
         diagram.selectAll('.primitive').classed('selected', false);
 
-        // If the primitive wasn't already selected, select it
+        // If the element wasn't already selected, select it
         if (!isSelected) {
             d3.select(event.currentTarget).classed('selected', true);
 
@@ -619,11 +851,75 @@ function renderPrimitives(primitives) {
         }
     });
 
-    // Add tooltip with primitive details on hover, now including clock cycle
-    primitiveElements.append('title')
-        .text(d => `Type: ${d.type}\nID: ${d.id}\nClock Cycle: ${d.clock_cycle}`);
+    // Add tooltip with element details on hover, including clock cycle and module-specific info
+    elementElements.append('title')
+        .text(d => {
+            let tooltip = `Type: ${d.type}\nID: ${d.id}\nClock Cycle: ${d.clock_cycle}`;
+            if (d.type === 'module') {
+                tooltip += `\nModule Type: ${d.moduleType}`;
+                tooltip += `\nComponents: ${d.components.length}`;
+                tooltip += `\nDouble-click: Expand/collapse`;
+            }
+            return tooltip;
+        });
 
-    return primitiveElements;
+    return elementElements;
+}
+
+// Toggle module expansion/collapse
+function toggleModuleExpansion(moduleId) {
+    console.log(`Toggle expansion for module: ${moduleId}`);
+
+    // Get the module element
+    const moduleElement = d3.select(`#primitive-${moduleId}`);
+
+    // If the module is not found, return
+    if (moduleElement.empty()) {
+        console.error(`Module with ID ${moduleId} not found`);
+        return;
+    }
+
+    // Check if the module is currently expanded
+    const isExpanded = moduleElement.classed('expanded');
+
+    // Toggle the expanded class
+    moduleElement.classed('expanded', !isExpanded);
+
+    // Update the expand/collapse button icon
+    moduleElement.select('.module-expand-icon')
+        .text(isExpanded ? '+' : '−'); // Unicode minus sign for collapse
+
+    // Get the module data
+    const moduleData = moduleElement.datum();
+
+    if (isExpanded) {
+        // Module is currently expanded, so collapse it
+
+        // Remove the expanded module visualization (if any)
+        d3.select(`#module-expanded-${moduleId}`).remove();
+
+        // Display notification about implementation status
+        console.log(`Module ${moduleId} collapsed`);
+    } else {
+        // Module is currently collapsed, so expand it
+
+        // Display notification about future implementation
+        const message = `
+Expanded view for module "${moduleId}" will be fully implemented in the next phase.
+
+This would show the internal structure:
+- Module Type: ${moduleData.moduleType}
+- Components: ${moduleData.components ? moduleData.components.length : 0}
+- Inputs: ${moduleData.inputs ? Object.keys(moduleData.inputs).join(', ') : 'none'}
+- Outputs: ${moduleData.outputs ? Object.keys(moduleData.outputs).join(', ') : 'none'}
+`;
+
+        alert(message);
+
+        // Log to console for debugging
+        console.log(`Module ${moduleId} expanded`);
+        console.log('Module data:', moduleData);
+    }
 }
 
 // Highlight connections related to a primitive
@@ -657,53 +953,110 @@ function highlightClockCycle(cycleIndex) {
         .classed('highlighted', (d, i) => i === cycleIndex);
 }
 
-// Add input and output ports to primitives
-function addPrimitivePorts(primitiveElements) {
+// Add input and output ports to primitives and modules
+function addPrimitivePorts(elementElements) {
     const portRadius = 5;
 
-    // Add ports based on primitive type
-    primitiveElements.each(function(d) {
-        const primitive = d3.select(this);
-        const primitiveType = d.type;
+    // Add ports based on element type
+    elementElements.each(function(d) {
+        const element = d3.select(this);
+        const elementType = d.type;
 
-        // Determine the primitive dimensions
-        const width = primitiveType === 'input' || primitiveType === 'output' ? 80 : 60;
-        const height = primitiveType === 'input' || primitiveType === 'output' ? 40 : 60;
-        const xOffset = primitiveType === 'input' || primitiveType === 'output' ? -40 : -30;
-        const yOffset = primitiveType === 'input' || primitiveType === 'output' ? -20 : -30;
+        // Determine the element dimensions based on its type
+        let width, height, xOffset, yOffset;
 
-        // Add ports based on primitive type
-        if (primitiveType === 'input') {
-            // Input primitives only have output ports
-            addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
+        if (elementType === 'module') {
+            width = 120;
+            height = 80;
+            xOffset = -60;
+            yOffset = -40;
+        } else if (elementType === 'input' || elementType === 'output') {
+            width = 80;
+            height = 40;
+            xOffset = -40;
+            yOffset = -20;
+        } else {
+            width = 60;
+            height = 60;
+            xOffset = -30;
+            yOffset = -30;
         }
-        else if (primitiveType === 'output') {
-            // Output primitives only have input ports
-            addInputPort(primitive, xOffset, 0, d.id, 'in');
+
+        // Add ports based on element type
+        if (elementType === 'input') {
+            // Input elements only have output ports
+            addOutputPort(element, width + xOffset, 0, d.id, 'out');
         }
-        else if (primitiveType === 'add' || primitiveType === 'mul') {
-            // Add primitives have two inputs and one output
-            addInputPort(primitive, xOffset, -10, d.id, 'in1');
-            addInputPort(primitive, xOffset, 10, d.id, 'in2');
-            addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
+        else if (elementType === 'output') {
+            // Output elements only have input ports
+            addInputPort(element, xOffset, 0, d.id, 'in');
         }
-        else if (primitiveType === 'relu2' || primitiveType === 'clamp' || primitiveType === 'reg') {
+        else if (elementType === 'add' || elementType === 'mul') {
+            // Add elements have two inputs and one output
+            addInputPort(element, xOffset, -10, d.id, 'in1');
+            addInputPort(element, xOffset, 10, d.id, 'in2');
+            addOutputPort(element, width + xOffset, 0, d.id, 'out');
+        }
+        else if (elementType === 'relu2' || elementType === 'clamp' || elementType === 'reg') {
             // ReLU, clamp, and reg have one input and one output
-            addInputPort(primitive, xOffset, 0, d.id, 'in');
-            addOutputPort(primitive, width + xOffset, 0, d.id, 'out');
+            addInputPort(element, xOffset, 0, d.id, 'in');
+            addOutputPort(element, width + xOffset, 0, d.id, 'out');
+        }
+        else if (elementType === 'module') {
+            // For modules, add ports based on their inputs and outputs definitions
+
+            // Determine the number of inputs and their positions
+            const inputPorts = d.inputs ? Object.keys(d.inputs) : [];
+            const inputSpacing = inputPorts.length > 1 ? height / (inputPorts.length + 1) : height / 2;
+
+            // Add input ports
+            inputPorts.forEach((portId, index) => {
+                const y = -height/2 + (index + 1) * inputSpacing;
+                addInputPort(element, xOffset, y, d.id, portId);
+
+                // Add port label
+                element.append('text')
+                    .attr('class', 'port-label')
+                    .attr('x', xOffset + 12)
+                    .attr('y', y)
+                    .attr('text-anchor', 'start')
+                    .attr('font-size', '8px')
+                    .attr('dominant-baseline', 'middle')
+                    .text(portId);
+            });
+
+            // Determine the number of outputs and their positions
+            const outputPorts = d.outputs ? Object.keys(d.outputs) : [];
+            const outputSpacing = outputPorts.length > 1 ? height / (outputPorts.length + 1) : height / 2;
+
+            // Add output ports
+            outputPorts.forEach((portId, index) => {
+                const y = -height/2 + (index + 1) * outputSpacing;
+                addOutputPort(element, width + xOffset, y, d.id, portId);
+
+                // Add port label
+                element.append('text')
+                    .attr('class', 'port-label')
+                    .attr('x', width + xOffset - 12)
+                    .attr('y', y)
+                    .attr('text-anchor', 'end')
+                    .attr('font-size', '8px')
+                    .attr('dominant-baseline', 'middle')
+                    .text(portId);
+            });
         }
     });
 
-    // Function to add an input port to a primitive
-    function addInputPort(primitive, x, y, primitiveId, portId) {
+    // Function to add an input port to an element
+    function addInputPort(element, x, y, elementId, portId) {
         // Create a port group to hold the port circle and label
-        const portGroup = primitive.append('g')
+        const portGroup = element.append('g')
             .attr('class', 'port-group');
 
         // Add the port circle
         portGroup.append('circle')
             .attr('class', 'port port-input')
-            .attr('id', `port-${primitiveId}-${portId}`)
+            .attr('id', `port-${elementId}-${portId}`)
             .attr('cx', x)
             .attr('cy', y)
             .attr('r', portRadius)
@@ -711,16 +1064,16 @@ function addPrimitivePorts(primitiveElements) {
             .text(`Input: ${portId}`);
     }
 
-    // Function to add an output port to a primitive
-    function addOutputPort(primitive, x, y, primitiveId, portId) {
+    // Function to add an output port to an element
+    function addOutputPort(element, x, y, elementId, portId) {
         // Create a port group to hold the port circle and label
-        const portGroup = primitive.append('g')
+        const portGroup = element.append('g')
             .attr('class', 'port-group');
 
         // Add the port circle
         portGroup.append('circle')
             .attr('class', 'port port-output')
-            .attr('id', `port-${primitiveId}-${portId}`)
+            .attr('id', `port-${elementId}-${portId}`)
             .attr('cx', x)
             .attr('cy', y)
             .attr('r', portRadius)
@@ -729,27 +1082,31 @@ function addPrimitivePorts(primitiveElements) {
     }
 }
 
-// Extract connections from primitive inputs
-function extractConnections(primitives) {
+// Extract connections from element (primitive or module) inputs
+function extractConnections(elements) {
     const connections = [];
-    
-    primitives.forEach(primitive => {
-        if (primitive.inputs) {
-            for (const [targetPort, sourceConnection] of Object.entries(primitive.inputs)) {
-                // Parse the source connection (format: "primitiveId.portName")
-                const [sourcePrimitiveId, sourcePort] = sourceConnection.split('.');
-                
+
+    // Process regular element connections
+    elements.forEach(element => {
+        if (element.inputs) {
+            for (const [targetPort, sourceConnection] of Object.entries(element.inputs)) {
+                // Parse the source connection (format: "elementId.portName")
+                const [sourceElementId, sourcePort] = sourceConnection.split('.');
+
                 // Create a connection object
                 connections.push({
-                    source: sourcePrimitiveId,
-                    target: primitive.id,
+                    source: sourceElementId,
+                    target: element.id,
                     sourcePort: sourcePort,
                     targetPort: targetPort
                 });
             }
         }
+
+        // If this is a module, we don't extract internal connections for collapsed view
+        // Internal connections will be handled when expanded
     });
-    
+
     return connections;
 }
 

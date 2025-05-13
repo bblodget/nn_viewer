@@ -15,18 +15,22 @@ SchematicViewer renders interactive diagrams defined in JSON netlist format usin
 You can try SchematicViewer online at: https://bblodget.github.io/nn_viewer/
 
 For a quick demo:
-1. Download the [sample diagram.json](diagram.json) file from this repository
+1. Download one of the sample JSON files from the [/json](json/) directory:
+   - [primitives_only.json](json/primitives_only.json) - Simple primitives diagram
+   - [module_definition.json](json/module_definition.json) - Advanced module-based diagram
 2. Drag and drop the file into the online viewer
 3. Explore the neural network component visualization
 
 ## Features
 
 - **Interactive Visualization**: Pan, zoom, and inspect individual components
-- **Automatic Layout**: Positions are determined based on connections and dependencies 
+- **Automatic Layout**: Positions are determined based on connections and dependencies
 - **Clock Cycle Alignment**: Components are automatically arranged in temporal order
 - **Multiple Component Types**: Support for common neural network primitives
 - **Connection Highlighting**: Click on components to highlight data paths
 - **Drag & Drop Interface**: Easily load diagram files via drag and drop
+- **Hierarchical Modules**: Support for reusable module definitions with vector inputs
+- **Expandable/Collapsible**: Modules can be expanded to view internal structure
 
 ## Usage
 
@@ -34,7 +38,7 @@ For a quick demo:
 2. **Load a Diagram**: Either:
    - Click the "File Options" button and select a JSON file
    - Drag and drop a JSON file anywhere onto the diagram area
-   - Use the included [sample diagram.json](diagram.json) to get started
+   - Use the included sample files in the [/json](json/) directory to get started
 3. **Interact with the Diagram**:
    - Zoom: Mouse wheel or zoom buttons (+/-)
    - Pan: Click and drag on the background
@@ -43,7 +47,11 @@ For a quick demo:
 
 ## Diagram Format
 
-SchematicViewer uses a simplified JSON format that automatically positions components based on their connections:
+SchematicViewer supports two primary JSON formats:
+
+### Basic Format (Primitives Only)
+
+A simplified JSON format that automatically positions components based on their connections:
 
 ```json
 [
@@ -77,9 +85,52 @@ The diagram is defined as an array of primitives, where:
 - Other primitives are positioned at (max input cycle + 1)
 - Vertical ordering is determined intelligently based on connection patterns
 
-For detailed format documentation, see [Diagram Format](design_docs/diagram_format.md).
+### Advanced Format (With Module Definitions)
+
+An extended format supporting hierarchical modules with reusable definitions:
+
+```json
+{
+  "moduleDefinitions": {
+    "quantized_linear": {
+      "inputs": [
+        {"name": "input", "size": 2},
+        {"name": "weight", "size": 2},
+        "bias"
+      ],
+      "outputs": ["out"],
+      "components": [
+        /* Internal components */
+      ],
+      "outputMappings": {
+        "out": "clamp.out"
+      }
+    }
+  },
+  "elements": [
+    /* Primitives and module instances */
+    {
+      "id": "linear1",
+      "type": "module",
+      "moduleType": "quantized_linear",
+      "inputs": {
+        "input": ["x0.out", "x1.out"],
+        "weight": ["w0.out", "w1.out"],
+        "bias": "bias.out"
+      }
+    }
+  ]
+}
+```
+
+For detailed format documentation, see:
+- [Diagram Format](design_docs/diagram_format.md)
+- [Hierarchical Structure](design_docs/hierarchical_structure.md)
+- [Module Reuse](design_docs/module_reuse.md)
 
 ## Supported Component Types
+
+### Primitives
 
 | Type | Description | Input Ports | Output Ports |
 |------|-------------|-------------|--------------|
@@ -90,6 +141,23 @@ For detailed format documentation, see [Diagram Format](design_docs/diagram_form
 | `relu2` | Square of ReLU activation | `in` | `out` |
 | `clamp` | Range limiter | `in` | `out` |
 | `reg` | Register for clock cycle delay | `in` | `out` |
+
+### Modules
+
+The SchematicViewer supports hierarchical modules - reusable components that encapsulate multiple primitives:
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `module` | Compound component with multiple internal primitives | `quantized_linear` |
+
+Modules support:
+- Vector inputs/outputs (arrays of connections)
+- Expandable/collapsible views
+- Reusable module definitions
+
+For details on creating and using modules, see:
+- [Hierarchical Structure](design_docs/hierarchical_structure.md)
+- [Module Reuse](design_docs/module_reuse.md)
 
 
 ## Installation
