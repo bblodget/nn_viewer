@@ -38,6 +38,12 @@
 - [x] Add validation to ensure netlist integrity
 - [x] Handle error cases gracefully
 
+**Note (2025-05-13):**
+- All vector inputs must be arrays of the correct length (e.g., "input": ["x0.out", "x1.out"] for a size-2 input)
+- All scalar inputs must be strings (e.g., "bias": "bias.out")
+- All connections must be in the format "elementId.portName"
+- Module instances must match the expected input types (array for vectors, string for scalars)
+
 ### Hierarchical Design
 - [x] Update the node model to primitives with clock cycle properties
 - [x] Implement clock cycle-based columnar alignment

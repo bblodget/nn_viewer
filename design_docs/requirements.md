@@ -83,4 +83,12 @@ Supported component types include:
 
 This tool will be open-source under the MIT License unless otherwise decided.
 
+## JSON Syntax Requirements (2025-05-13 Update)
+
+- All vector inputs must be arrays of the correct length (e.g., "input": ["x0.out", "x1.out"] for a size-2 input)
+- All scalar inputs must be strings (e.g., "bias": "bias.out")
+- All connections must be in the format "elementId.portName"
+- Module definitions must specify input sizes and types clearly
+- Module instances must match the expected input types (array for vectors, string for scalars)
+
 
