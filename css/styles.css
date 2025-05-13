@@ -297,6 +297,132 @@ svg {
     ry: 5;
 }
 
+/* Expanded module view styles */
+.module-expanded-background {
+    fill: #f0f8ff;
+    stroke: #3498db;
+    stroke-width: 2px;
+    stroke-dasharray: 5, 3;
+    opacity: 0.95;
+    rx: 10px;
+    ry: 10px;
+}
+
+.module-expanded-title {
+    font-size: 14px;
+    font-weight: bold;
+    text-anchor: middle;
+    fill: #2980b9;
+    pointer-events: none;
+}
+
+.module-expanded-close {
+    fill: #e74c3c;
+    stroke: white;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+
+.module-expanded-close:hover {
+    fill: #c0392b;
+}
+
+.module-expanded-close-icon {
+    font-size: 14px;
+    font-weight: bold;
+    text-anchor: middle;
+    fill: white;
+    pointer-events: none;
+}
+
+/* Internal component styles */
+.internal-component {
+    cursor: pointer;
+}
+
+.internal-component-body {
+    fill: #f9f9f9;
+    stroke: #555;
+    stroke-width: 1px;
+    rx: 5px;
+    ry: 5px;
+}
+
+.internal-component-label {
+    font-size: 10px;
+    text-anchor: middle;
+    fill: #333;
+    pointer-events: none;
+}
+
+/* Internal component type-specific styles */
+.internal-component-add .internal-component-body, 
+.internal-component-mul .internal-component-body {
+    fill: #f9f9f9;
+}
+
+.internal-component-relu2 .internal-component-body {
+    fill: #fff4d1;
+}
+
+.internal-component-clamp .internal-component-body {
+    fill: #ffd1d1;
+}
+
+.internal-component-reg .internal-component-body {
+    fill: #e6d1ff;
+}
+
+/* Internal port styles */
+.internal-port {
+    stroke: #555;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+
+.internal-port-input {
+    fill: #e1f5fe;
+}
+
+.internal-port-output {
+    fill: #e8f5e9;
+}
+
+.internal-port-label {
+    font-size: 6px;
+    fill: #666;
+    pointer-events: none;
+}
+
+/* Internal connection styles */
+.internal-connection {
+    stroke: #3498db;
+    stroke-width: 1.5px;
+    fill: none;
+    opacity: 0.7;
+}
+
+.module-output-indicator {
+    font-size: 10px;
+    fill: #2980b9;
+    font-weight: bold;
+    text-anchor: start;
+}
+
+/* Error message styles for module expansion */
+.module-error-message {
+    font-size: 14px;
+    font-weight: bold;
+    fill: #e74c3c;
+    text-anchor: middle;
+}
+
+.module-error-details {
+    font-size: 12px;
+    fill: #e74c3c;
+    text-anchor: middle;
+}
+
 /* Port label styles for modules */
 .port-label {
     fill: #555;
