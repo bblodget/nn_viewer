@@ -42,8 +42,13 @@ Each module is defined with this structure:
 ```json
 {
   "is_primitive": false,
-  "inputs": ["inputName1", "inputName2", /* ... */],
-  "outputs": ["outputName1", /* ... */],
+  "inputs": [
+    {"name": "inputName1", "size": 1},
+    {"name": "inputName2", "size": 8}
+  ],
+  "outputs": [
+    {"name": "outputName1", "size": 1}
+  ],
   "components": [
     { /* component definition */ },
     { /* component definition */ }
@@ -57,10 +62,14 @@ Each module is defined with this structure:
 ```
 
 - `is_primitive`: Flag indicating this is not a primitive (false or omitted for modules)
-- `inputs`: Array of input port names for the module
-- `outputs`: Array of output port names for the module
+- `inputs`: Array of input port definitions, each with a name and size
+  - `name`: The port identifier
+  - `size`: The port width (number of bits/elements, default 1 if omitted)
+- `outputs`: Array of output port definitions, each with a name and size
 - `components`: Array of component definitions within the module
 - `outputMappings`: Maps module output ports to internal component outputs
+
+The `outputMappings` field is a critical part of how modules expose their internal behavior to the outside world. Each key in this object corresponds to an output port name defined in the module's `outputs` array, and each value is a connection reference (typically to an internal component's output port). This creates the final signal path from internal components to the module's outputs.
 
 ## Component Types
 
@@ -77,7 +86,9 @@ Components (both primitives and modules) are instantiated with this structure:
   "label": "Optional Display Label",
   "inputs": {
     "portName1": "sourceId.portName",
-    "portName2": "$.inputName"
+    "portName2": "$.inputName",
+    "portName3[0]": "sourceId.portName[2]",
+    "portName3[1]": "$.inputName[3]"
   }
 }
 ```
@@ -94,8 +105,13 @@ Primitives are defined in a central registry and have this structure:
 ```json
 {
   "is_primitive": true,
-  "inputs": ["in1", "in2"],
-  "outputs": ["out"],
+  "inputs": [
+    {"name": "in1", "size": 1},
+    {"name": "in2", "size": 8}
+  ],
+  "outputs": [
+    {"name": "out", "size": 1}
+  ],
   "display": {
     "symbol": "+",
     "color": "#4CAF50",
@@ -105,8 +121,10 @@ Primitives are defined in a central registry and have this structure:
 ```
 
 - `is_primitive`: Flag identifying this as a primitive (true for primitives)
-- `inputs`: Array of input port names for the primitive
-- `outputs`: Array of output port names for the primitive
+- `inputs`: Array of input port definitions, each with a name and size
+  - `name`: The port identifier
+  - `size`: The port width (number of bits/elements, default 1 if omitted)
+- `outputs`: Array of output port definitions, each with a name and size
 - `display`: Visual representation properties
 
 Supported primitive types include:
@@ -126,13 +144,27 @@ Modules are defined as shown in the Module Definition section and have these cha
 
 ## Connection References
 
-The format uses two types of connection references:
+Connections in the schematic are created by assigning output port signals to input ports of components or by mapping internal component outputs to module outputs through the `outputMappings` field.
+
+The format uses three types of connection references:
 
 1. **Internal Component References**: `"componentId.portName"`
    - References an output port of another component within the same module
+   - For example: `"adder1.out"`
+   - Used when connecting one component's output to another component's input
 
 2. **Module Input References**: `"$.inputName"`
    - References an input port of the current module using the "$." prefix
+   - For example: `"$.bias"`
+   - Used when connecting a module input to a component input
+
+3. **Indexed Port References**: `"componentId.portName[index]"` or `"$.inputName[index]"`
+   - References a specific element of a multi-bit port
+   - For example: `"register1.out[3]"` or `"$.weights[2]"`
+   - Valid indices range from 0 to (size-1)
+   - Used when connecting individual bits from multi-bit signals
+
+All connections flow from outputs to inputs. Module outputs are defined by mapping internal component outputs through the `outputMappings` field.
 
 ## Automatic Layout
 
@@ -166,8 +198,13 @@ The top-level module (specified by `entryPointModule`) is treated identically to
   "primitiveDefinitions": {
     "add": {
       "is_primitive": true,
-      "inputs": ["in1", "in2"],
-      "outputs": ["out"],
+      "inputs": [
+        {"name": "in1", "size": 1},
+        {"name": "in2", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
       "display": {
         "symbol": "+",
         "color": "#4CAF50",
@@ -176,8 +213,13 @@ The top-level module (specified by `entryPointModule`) is treated identically to
     },
     "mul": {
       "is_primitive": true,
-      "inputs": ["in1", "in2"],
-      "outputs": ["out"],
+      "inputs": [
+        {"name": "in1", "size": 1},
+        {"name": "in2", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
       "display": {
         "symbol": "×",
         "color": "#2196F3",
@@ -186,18 +228,40 @@ The top-level module (specified by `entryPointModule`) is treated identically to
     },
     "reg": {
       "is_primitive": true,
-      "inputs": ["in"],
-      "outputs": ["out"],
+      "inputs": [
+        {"name": "in", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
       "display": {
         "symbol": "D",
         "color": "#9C27B0",
         "shape": "rect"
       }
     },
+    "bus_reg": {
+      "is_primitive": true,
+      "inputs": [
+        {"name": "in", "size": 8}
+      ],
+      "outputs": [
+        {"name": "out", "size": 8}
+      ],
+      "display": {
+        "symbol": "D[8]",
+        "color": "#9C27B0",
+        "shape": "rect"
+      }
+    },
     "relu2": {
       "is_primitive": true,
-      "inputs": ["in"],
-      "outputs": ["out"],
+      "inputs": [
+        {"name": "in", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
       "display": {
         "symbol": "ReLU²",
         "color": "#FF9800",
@@ -206,8 +270,12 @@ The top-level module (specified by `entryPointModule`) is treated identically to
     },
     "clamp": {
       "is_primitive": true,
-      "inputs": ["in"],
-      "outputs": ["out"],
+      "inputs": [
+        {"name": "in", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
       "display": {
         "symbol": "◊",
         "color": "#F44336",
@@ -217,8 +285,16 @@ The top-level module (specified by `entryPointModule`) is treated identically to
   },
   "moduleDefinitions": {
     "macBlock": {
-      "inputs": ["x0", "w0", "x1", "w1"],
-      "outputs": ["out"],
+      "is_primitive": false,
+      "inputs": [
+        {"name": "x0", "size": 1},
+        {"name": "w0", "size": 1},
+        {"name": "x1", "size": 1},
+        {"name": "w1", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
       "components": [
         {
           "id": "mul0",
@@ -250,8 +326,18 @@ The top-level module (specified by `entryPointModule`) is treated identically to
       }
     },
     "mainDiagram": {
-      "inputs": ["x0", "w0", "x1", "w1", "bias", "scale"],
-      "outputs": ["out"],
+      "is_primitive": false,
+      "inputs": [
+        {"name": "x0", "size": 1},
+        {"name": "w0", "size": 1},
+        {"name": "x1", "size": 1},
+        {"name": "w1", "size": 1},
+        {"name": "bias", "size": 1},
+        {"name": "scale", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
       "components": [
         {
           "id": "macBlock1",
@@ -355,6 +441,8 @@ The top-level module (specified by `entryPointModule`) is treated identically to
 6. **Flat Reference Structure**: All references use a simple two-level approach (component.port or $.input)
 7. **Unified Component Model**: Primitives and modules share a common instantiation interface
 8. **Extensible Primitive System**: Primitives are defined in the same format as modules
+9. **Multi-bit Port Support**: Ports can have sizes greater than 1 and be indexed into with array notation
+10. **Structured Port Definitions**: Port definitions include metadata like size for enhanced visualization
 
 ## Implementation Notes
 
@@ -368,3 +456,34 @@ When implementing the v2 format:
 6. **Dynamic Layout**: Update layout when navigating between modules
 7. **Connection Resolution**: Translate `$.inputName` references to actual connections when rendering
 8. **Unified Rendering**: Handle both primitives and modules with shared rendering logic
+9. **Multi-bit Port Rendering**: For ports with size > 1, consider:
+   - Visual indication of width (thicker lines, bus notation)
+   - Special handling for indexed connections
+   - Connection bundling for related signals
+
+### Example of Port Indexing
+
+For a multi-bit register primitive with bus inputs/outputs:
+
+```json
+{
+  "id": "weights_reg",
+  "type": "bus_reg",
+  "inputs": {
+    "in": "$.weights"
+  }
+}
+```
+
+And individual bit access:
+
+```json
+{
+  "id": "mul0",
+  "type": "mul",
+  "inputs": {
+    "in1": "weights_reg.out[0]",
+    "in2": "$.x[0]"
+  }
+}
+```
