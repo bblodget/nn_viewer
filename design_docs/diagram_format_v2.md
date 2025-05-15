@@ -57,6 +57,12 @@ Each module is defined with this structure:
   "outputMappings": {
     "outputName1": "componentId.portName",
     /* Additional output mappings... */
+  },
+  "display": {
+    "width": 3,
+    "height": 2,
+    "color": "#2196F3",
+    "label": "Custom Module Label"
   }
 }
 ```
@@ -68,6 +74,11 @@ Each module is defined with this structure:
 - `outputs`: Array of output port definitions, each with a name and size
 - `components`: Array of component definitions within the module
 - `outputMappings`: Maps module output ports to internal component outputs
+- `display`: Optional visual customization properties
+  - `height`: Height of the module in grid units (default value determined by renderer)
+  - `color`: Background/border color for the module (in HTML color format)
+  - `label`: Custom display label that overrides the module name
+  - Note: Width is not configurable as it's determined by module latency (clock cycles)
 
 The `outputMappings` field is a critical part of how modules expose their internal behavior to the outside world. Each key in this object corresponds to an output port name defined in the module's `outputs` array, and each value is a connection reference (typically to an internal component's output port). This creates the final signal path from internal components to the module's outputs.
 
@@ -174,11 +185,28 @@ The position of components is automatically determined by these rules:
    - Input primitives are always placed in cycle 0
    - For other primitives, the cycle is calculated as (maximum input cycle + 1)
    - Module components follow the same cycle calculation rule
+   - Module width is always determined by its latency (number of clock cycles from input to output)
 
 2. **Row (Vertical Position)**:
    - Input primitives are positioned sequentially
    - Processing primitives and modules are positioned near the average Y-position of their inputs
    - Modules are given more vertical space for readability
+
+3. **Component Dimensions**:
+   - Primitive components use standard sizes based on their type
+   - Module width is determined by the pipeline latency (not user-configurable)
+   - Module height can be specified via `display.height` for better port spacing
+   - When height is not specified, it's automatically calculated based on:
+     - Number of input and output ports
+     - Readability requirements for the label
+
+4. **Module Compression Mode**:
+   - The viewer supports a global toggle for "Full" or "Compressed" module display
+   - In "Full" mode, modules occupy their full clock cycle width (default)
+   - In "Compressed" mode, modules are displayed with minimal width while preserving proper cycle alignment
+   - Modules are only compressed when doing so won't disrupt timing relationships or cycle alignment
+   - Parallel modules with matching latency can be compressed together
+   - The compression mode only affects the current active module's view
 
 ## Module Navigation
 
@@ -295,6 +323,11 @@ The top-level module (specified by `entryPointModule`) is treated identically to
       "outputs": [
         {"name": "out", "size": 1}
       ],
+      "display": {
+        "height": 2,
+        "color": "#7986CB",
+        "label": "MAC"
+      },
       "components": [
         {
           "id": "mul0",
@@ -443,6 +476,10 @@ The top-level module (specified by `entryPointModule`) is treated identically to
 8. **Extensible Primitive System**: Primitives are defined in the same format as modules
 9. **Multi-bit Port Support**: Ports can have sizes greater than 1 and be indexed into with array notation
 10. **Structured Port Definitions**: Port definitions include metadata like size for enhanced visualization
+11. **Visual Customization**: Both primitives and modules support display properties for visual styling
+12. **Automatic Width Calculation**: Module width is determined by its latency for accurate timing visualization
+13. **Height Control**: Modules can specify height in grid units for better port spacing
+14. **Compression Mode**: A global view option to display modules with minimal width while preserving cycle alignment
 
 ## Implementation Notes
 
