@@ -22,12 +22,18 @@ Each diagram JSON file has the following structure:
     "module1": { /* module definition */ },
     "module2": { /* module definition */ },
     /* Additional module definitions... */
+  },
+  "primitiveDefinitions": {
+    "primitiveType1": { /* primitive definition */ },
+    "primitiveType2": { /* primitive definition */ },
+    /* Additional primitive definitions... */
   }
 }
 ```
 
 - `entryPointModule`: String identifying which module to display initially
 - `moduleDefinitions`: Object containing all module definitions used in the diagram
+- `primitiveDefinitions`: Object containing all primitive type definitions (optional, can also be loaded from a system file)
 
 ## Module Definition
 
@@ -35,6 +41,7 @@ Each module is defined with this structure:
 
 ```json
 {
+  "is_primitive": false,
   "inputs": ["inputName1", "inputName2", /* ... */],
   "outputs": ["outputName1", /* ... */],
   "components": [
@@ -49,6 +56,7 @@ Each module is defined with this structure:
 }
 ```
 
+- `is_primitive`: Flag indicating this is not a primitive (false or omitted for modules)
 - `inputs`: Array of input port names for the module
 - `outputs`: Array of output port names for the module
 - `components`: Array of component definitions within the module
@@ -56,16 +64,17 @@ Each module is defined with this structure:
 
 ## Component Types
 
-The system supports two main types of components:
+All components follow a unified structure, where both primitives and modules are instantiated similarly. The distinction between them is determined by their definition.
 
-### 1. Primitive Components
+### Component Instantiation
 
-Basic building blocks with predefined functionality:
+Components (both primitives and modules) are instantiated with this structure:
 
 ```json
 {
   "id": "componentId",
-  "type": "primitiveType",
+  "type": "typeName",
+  "label": "Optional Display Label",
   "inputs": {
     "portName1": "sourceId.portName",
     "portName2": "$.inputName"
@@ -74,8 +83,31 @@ Basic building blocks with predefined functionality:
 ```
 
 - `id`: Unique identifier for the component within its module
-- `type`: Component type (e.g., "add", "mul", "reg", "relu2", "clamp")
+- `type`: Component type, referencing either a primitive or module definition
+- `label`: Optional display label for the component (if omitted, type is used)
 - `inputs`: Maps component input ports to sources (other components or module inputs)
+
+### 1. Primitive Definitions
+
+Primitives are defined in a central registry and have this structure:
+
+```json
+{
+  "is_primitive": true,
+  "inputs": ["in1", "in2"],
+  "outputs": ["out"],
+  "display": {
+    "symbol": "+",
+    "color": "#4CAF50",
+    "shape": "circle"
+  }
+}
+```
+
+- `is_primitive`: Flag identifying this as a primitive (true for primitives)
+- `inputs`: Array of input port names for the primitive
+- `outputs`: Array of output port names for the primitive
+- `display`: Visual representation properties
 
 Supported primitive types include:
 - `add`: Addition operation
@@ -84,28 +116,13 @@ Supported primitive types include:
 - `clamp`: Range limiter
 - `reg`: Register (for delay/pipeline stages)
 
-### 2. Module Components
+### 2. Module Definitions
 
-References to other module definitions, creating a hierarchy:
+Modules are defined as shown in the Module Definition section and have these characteristics:
 
-```json
-{
-  "id": "moduleInstanceId",
-  "type": "module",
-  "moduleType": "moduleName",
-  "label": "Optional Display Label",
-  "inputs": {
-    "subModuleInput1": "$.parentModuleInput1",
-    "subModuleInput2": "componentId.portName"
-  }
-}
-```
-
-- `id`: Unique identifier for the module instance
-- `type`: Always "module" for module instances
-- `moduleType`: Name of the module definition being instantiated
-- `label`: Optional display label for the module (if omitted, moduleType is used)
-- `inputs`: Maps the submodule's inputs to either parent module inputs or component outputs
+- Not marked with `is_primitive` (or explicitly set to false)
+- Contain a `components` array with internal components
+- Define `outputMappings` to connect internal components to module outputs
 
 ## Connection References
 
@@ -146,6 +163,58 @@ The top-level module (specified by `entryPointModule`) is treated identically to
 ```json
 {
   "entryPointModule": "mainDiagram",
+  "primitiveDefinitions": {
+    "add": {
+      "is_primitive": true,
+      "inputs": ["in1", "in2"],
+      "outputs": ["out"],
+      "display": {
+        "symbol": "+",
+        "color": "#4CAF50",
+        "shape": "circle"
+      }
+    },
+    "mul": {
+      "is_primitive": true,
+      "inputs": ["in1", "in2"],
+      "outputs": ["out"],
+      "display": {
+        "symbol": "×",
+        "color": "#2196F3",
+        "shape": "circle"
+      }
+    },
+    "reg": {
+      "is_primitive": true,
+      "inputs": ["in"],
+      "outputs": ["out"],
+      "display": {
+        "symbol": "D",
+        "color": "#9C27B0",
+        "shape": "rect"
+      }
+    },
+    "relu2": {
+      "is_primitive": true,
+      "inputs": ["in"],
+      "outputs": ["out"],
+      "display": {
+        "symbol": "ReLU²",
+        "color": "#FF9800",
+        "shape": "rect"
+      }
+    },
+    "clamp": {
+      "is_primitive": true,
+      "inputs": ["in"],
+      "outputs": ["out"],
+      "display": {
+        "symbol": "◊",
+        "color": "#F44336",
+        "shape": "diamond"
+      }
+    }
+  },
   "moduleDefinitions": {
     "macBlock": {
       "inputs": ["x0", "w0", "x1", "w1"],
@@ -186,8 +255,7 @@ The top-level module (specified by `entryPointModule`) is treated identically to
       "components": [
         {
           "id": "macBlock1",
-          "type": "module",
-          "moduleType": "macBlock",
+          "type": "macBlock",
           "label": "MAC Block",
           "inputs": {
             "x0": "$.x0",
@@ -285,14 +353,18 @@ The top-level module (specified by `entryPointModule`) is treated identically to
 4. **Automatic Layout**: Components are automatically positioned based on data flow
 5. **Self-Contained Definitions**: Module definitions include all necessary information for rendering
 6. **Flat Reference Structure**: All references use a simple two-level approach (component.port or $.input)
+7. **Unified Component Model**: Primitives and modules share a common instantiation interface
+8. **Extensible Primitive System**: Primitives are defined in the same format as modules
 
 ## Implementation Notes
 
 When implementing the v2 format:
 
-1. **Module Registry**: All module definitions should be stored in a central registry
-2. **Expanded Views**: When expanding a module, render its components in a new view
-3. **Navigation State**: Maintain a breadcrumb or history stack for module navigation
-4. **Scope Isolation**: Each module's component IDs are scoped to that module
-5. **Dynamic Layout**: Update layout when navigating between modules
-6. **Connection Resolution**: Translate `$.inputName` references to actual connections when rendering
+1. **Component Registry**: All module and primitive definitions should be stored in central registries
+2. **Primitive Loading**: Load primitive definitions at startup from a system file or embed them in the code
+3. **Expanded Views**: When expanding a module, render its components in a new view
+4. **Navigation State**: Maintain a breadcrumb or history stack for module navigation
+5. **Scope Isolation**: Each module's component IDs are scoped to that module
+6. **Dynamic Layout**: Update layout when navigating between modules
+7. **Connection Resolution**: Translate `$.inputName` references to actual connections when rendering
+8. **Unified Rendering**: Handle both primitives and modules with shared rendering logic
