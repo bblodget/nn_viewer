@@ -42,13 +42,24 @@ Each module is defined with this structure:
 ```json
 {
   "is_primitive": false,
+  "parameters": {
+    "DATA_WIDTH": 8,
+    "PAIRS": 2
+  },
   "inputs": [
-    {"name": "inputName1", "size": 1},
-    {"name": "inputName2", "size": 8}
+    {"name": "inputName1", "size": "${DATA_WIDTH}", "group": "group1"},
+    {"name": "inputName2", "size": "${DATA_WIDTH}", "group": "group1"}
   ],
   "outputs": [
     {"name": "outputName1", "size": 1}
   ],
+  "port_groups": {
+    "group1": {
+      "ports": ["inputName1", "inputName2"],
+      "arrangement": "interleaved",
+      "color": "#3F51B5"
+    }
+  },
   "components": [
     { /* component definition */ },
     { /* component definition */ }
@@ -59,25 +70,34 @@ Each module is defined with this structure:
     /* Additional output mappings... */
   },
   "display": {
-    "width": 3,
     "height": 2,
     "color": "#2196F3",
-    "label": "Custom Module Label"
+    "label": "Custom Module (${PAIRS}x)"
   }
 }
 ```
 
 - `is_primitive`: Flag indicating this is not a primitive (false or omitted for modules)
-- `inputs`: Array of input port definitions, each with a name and size
+- `parameters`: Object containing configurable values that can be referenced elsewhere
+  - Parameter values can be substituted in port sizes, labels, etc. using `${PARAM_NAME}` syntax
+  - Parameters can be overridden when instantiating a module
+- `inputs`: Array of input port definitions, each with a name, size, and optional group
   - `name`: The port identifier
   - `size`: The port width (number of bits/elements, default 1 if omitted)
+  - `group`: Optional reference to a port group for layout coordination
 - `outputs`: Array of output port definitions, each with a name and size
+- `port_groups`: Defines grouping and arrangement of related ports
+  - Each group has a unique identifier and contains:
+    - `ports`: Array of port names in the group
+    - `arrangement`: Layout style ("interleaved", "sequential", "alternating", etc.)
+    - `color`: Optional color for visual identification
+    - `spacing`: Optional value for spacing between grouped ports
 - `components`: Array of component definitions within the module
 - `outputMappings`: Maps module output ports to internal component outputs
 - `display`: Optional visual customization properties
   - `height`: Height of the module in grid units (default value determined by renderer)
   - `color`: Background/border color for the module (in HTML color format)
-  - `label`: Custom display label that overrides the module name
+  - `label`: Custom display label that can include parameter values with `${PARAM_NAME}`
   - Note: Width is not configurable as it's determined by module latency (clock cycles)
 
 The `outputMappings` field is a critical part of how modules expose their internal behavior to the outside world. Each key in this object corresponds to an output port name defined in the module's `outputs` array, and each value is a connection reference (typically to an internal component's output port). This creates the final signal path from internal components to the module's outputs.
@@ -95,6 +115,10 @@ Components (both primitives and modules) are instantiated with this structure:
   "id": "componentId",
   "type": "typeName",
   "label": "Optional Display Label",
+  "parameters": {
+    "DATA_WIDTH": 16,
+    "CUSTOM_PARAM": "value"
+  },
   "inputs": {
     "portName1": "sourceId.portName",
     "portName2": "$.inputName",
@@ -106,7 +130,8 @@ Components (both primitives and modules) are instantiated with this structure:
 
 - `id`: Unique identifier for the component within its module
 - `type`: Component type, referencing either a primitive or module definition
-- `label`: Optional display label for the component (if omitted, type is used)
+- `parameters`: Optional object containing parameter values that override the defaults in the module/primitive definition
+- `label`: Optional display label that overrides the default from the type definition
 - `inputs`: Maps component input ports to sources (other components or module inputs)
 
 ### 1. Primitive Definitions
@@ -480,6 +505,10 @@ The top-level module (specified by `entryPointModule`) is treated identically to
 12. **Automatic Width Calculation**: Module width is determined by its latency for accurate timing visualization
 13. **Height Control**: Modules can specify height in grid units for better port spacing
 14. **Compression Mode**: A global view option to display modules with minimal width while preserving cycle alignment
+15. **Parameterized Definitions**: Modules and primitives support parameters that can be referenced in sizes and labels
+16. **Parameter Substitution**: Use `${PARAM_NAME}` syntax to access parameter values in various fields
+17. **Port Grouping**: Related ports can be grouped for layout coordination
+18. **Custom Port Arrangements**: Specify how grouped ports should be arranged (interleaved, sequential, etc.)
 
 ## Implementation Notes
 
@@ -497,6 +526,15 @@ When implementing the v2 format:
    - Visual indication of width (thicker lines, bus notation)
    - Special handling for indexed connections
    - Connection bundling for related signals
+10. **Parameter Resolution**: Implement parameter substitution with these rules:
+   - Replace `${PARAM_NAME}` patterns with actual values from parameters object
+   - Component instance parameters override module definition parameters
+   - Parent module parameters can be referenced in child module instantiations
+   - Provide clear errors for undefined parameter references
+11. **Port Group Arrangement**: Implement different arrangement algorithms:
+   - Interleaved: Alternate ports from the group (A, B, A, B, ...)
+   - Sequential: Group similar ports together (A, A, A, B, B, B, ...)
+   - Alternating: Other patterns like (A, B, B, A, A, B, ...)
 
 ### Example of Port Indexing
 

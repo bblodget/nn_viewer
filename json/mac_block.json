@@ -1,9 +1,110 @@
 {
   "entryPointModule": "mainDiagram",
+  "primitiveDefinitions": {
+    "add": {
+      "is_primitive": true,
+      "inputs": [
+        {"name": "in1", "size": 1},
+        {"name": "in2", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "display": {
+        "symbol": "+",
+        "color": "#4CAF50",
+        "shape": "circle"
+      }
+    },
+    "mul": {
+      "is_primitive": true,
+      "inputs": [
+        {"name": "in1", "size": 1},
+        {"name": "in2", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "display": {
+        "symbol": "×",
+        "color": "#2196F3",
+        "shape": "circle"
+      }
+    },
+    "reg": {
+      "is_primitive": true,
+      "inputs": [
+        {"name": "in", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "display": {
+        "symbol": "D",
+        "color": "#9C27B0",
+        "shape": "rect"
+      }
+    },
+    "relu2": {
+      "is_primitive": true,
+      "inputs": [
+        {"name": "in", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "display": {
+        "symbol": "ReLU²",
+        "color": "#FF9800",
+        "shape": "rect"
+      }
+    },
+    "clamp": {
+      "is_primitive": true,
+      "inputs": [
+        {"name": "in", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "display": {
+        "symbol": "◊",
+        "color": "#F44336",
+        "shape": "diamond"
+      }
+    }
+  },
   "moduleDefinitions": {
     "macBlock": {
-      "inputs": ["x0", "w0", "x1", "w1"],
-      "outputs": ["out"],
+      "is_primitive": false,
+      "parameters": {
+        "PAIRS": 2,
+        "DATA_WIDTH": 1
+      },
+      "inputs": [
+        {"name": "x0", "size": "${DATA_WIDTH}", "group": "pair1"},
+        {"name": "w0", "size": "${DATA_WIDTH}", "group": "pair1"},
+        {"name": "x1", "size": "${DATA_WIDTH}", "group": "pair2"},
+        {"name": "w1", "size": "${DATA_WIDTH}", "group": "pair2"}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "port_groups": {
+        "pair1": {
+          "ports": ["x0", "w0"],
+          "arrangement": "interleaved"
+        },
+        "pair2": {
+          "ports": ["x1", "w1"],
+          "arrangement": "interleaved"
+        }
+      },
+      "display": {
+        "height": 2,
+        "color": "#7986CB",
+        "label": "MAC (${PAIRS}x)"
+      },
       "components": [
         {
           "id": "mul0",
@@ -35,13 +136,41 @@
       }
     },
     "mainDiagram": {
-      "inputs": ["x0", "w0", "x1", "w1", "bias", "scale"],
-      "outputs": ["out"],
+      "is_primitive": false,
+      "parameters": {
+        "COMPUTE_WIDTH": 1
+      },
+      "inputs": [
+        {"name": "x0", "size": "${COMPUTE_WIDTH}", "group": "inputs"},
+        {"name": "w0", "size": "${COMPUTE_WIDTH}", "group": "weights"},
+        {"name": "x1", "size": "${COMPUTE_WIDTH}", "group": "inputs"},
+        {"name": "w1", "size": "${COMPUTE_WIDTH}", "group": "weights"},
+        {"name": "bias", "size": 1},
+        {"name": "scale", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "port_groups": {
+        "inputs": {
+          "ports": ["x0", "x1"],
+          "arrangement": "sequential",
+          "color": "#4CAF50"
+        },
+        "weights": {
+          "ports": ["w0", "w1"],
+          "arrangement": "sequential",
+          "color": "#2196F3"
+        }
+      },
       "components": [
         {
           "id": "macBlock1",
-          "type": "module",
-          "moduleType": "macBlock",
+          "type": "macBlock",
+          "parameters": {
+            "PAIRS": 2,
+            "DATA_WIDTH": "${COMPUTE_WIDTH}"
+          },
           "label": "MAC Block",
           "inputs": {
             "x0": "$.x0",
