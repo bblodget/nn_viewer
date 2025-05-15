@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SchematicViewer is a web-based tool for creating and visualizing low-level schematic diagrams of neural network components. It renders interactive diagrams defined in a hierarchical JSON format using D3.js, supporting features like panning, zooming, module navigation, and node-level inspection.
+NNCircuit is a web-based tool for creating and visualizing low-level schematic diagrams of neural network components. It renders interactive diagrams defined in a hierarchical JSON format using D3.js, supporting features like panning, zooming, module navigation, and node-level inspection.
 
 For detailed information, see the design documents:
 - [Requirements Document](design_docs/requirements.md)

@@ -1,18 +1,18 @@
-# SchematicViewer
+# NNCircuit
 
 A web-based tool for creating and visualizing low-level schematic diagrams of neural network components. Co-developed with [Claude](https://claude.ai), an AI assistant by Anthropic.
 
 ## Overview
 
-SchematicViewer renders interactive diagrams defined in a hierarchical JSON format using D3.js, providing a clean, schematic-style visualization of neural network internals with module-based organization and clock cycle timing visualization.
+NNCircuit renders interactive diagrams defined in a hierarchical JSON format using D3.js, providing a clean, circuit-style visualization of neural network internals with module-based organization and clock cycle timing visualization.
 
 **Note:** This project is a work in progress. See the [Status Updates](design_docs/status/) for upcoming features and development status.
 
-![SchematicViewer Screenshot](screenshots/shot017.png)
+![NNCircuit Screenshot](screenshots/shot017.png)
 
 ## Try it Online
 
-You can try SchematicViewer online at: https://bblodget.github.io/nn_viewer/
+You can try NNCircuit online at: https://bblodget.github.io/nn_viewer/
 
 For a quick demo:
 1. Download one of the sample JSON files from the [/json](json/) directory:
@@ -55,7 +55,7 @@ For a quick demo:
 
 ## Diagram Format (V2)
 
-SchematicViewer uses a hierarchical JSON format with modules, primitives, and parameterization:
+NNCircuit uses a hierarchical JSON format with modules, primitives, and parameterization:
 
 ```json
 {
@@ -143,7 +143,7 @@ For detailed format documentation, see:
 
 ### Modules
 
-SchematicViewer supports hierarchical modules - reusable components that encapsulate primitives and other modules:
+NNCircuit supports hierarchical modules - reusable components that encapsulate primitives and other modules:
 
 - **Unified Component Model**: Primitives and modules share a common instantiation interface
 - **Parameterization**: Modules can have configurable parameters with expression support
@@ -171,9 +171,9 @@ No installation required! This is a pure HTML/JavaScript application that runs d
 
 ## Development
 
-SchematicViewer was co-developed with [Claude](https://claude.ai), utilizing Claude Code for AI pair programming. The development process involved collaborative coding, design discussions, and iterative refinement with Claude providing implementation suggestions and helping solve technical challenges.
+NNCircuit was co-developed with [Claude](https://claude.ai), utilizing Claude Code for AI pair programming. The development process involved collaborative coding, design discussions, and iterative refinement with Claude providing implementation suggestions and helping solve technical challenges.
 
-To modify or extend the SchematicViewer:
+To modify or extend NNCircuit:
 
 1. Edit the HTML/CSS for layout and styling
 2. Modify `viewer.js` for visualization logic
@@ -184,7 +184,7 @@ See the [Status Updates](design_docs/status/) for the current development status
 
 ## Project Status
 
-SchematicViewer is currently being rewritten to support the v2 format. The implementation will follow the phases outlined in the [latest status update](design_docs/status/status_2025_05_15.md):
+NNCircuit is currently being rewritten to support the v2 format. The implementation will follow the phases outlined in the [latest status update](design_docs/status/status_2025_05_15.md):
 
 1. **Core Architecture**: Module/primitive registry, parameter resolution, basic rendering
 2. **Advanced Features**: Port groups, component loops, module navigation

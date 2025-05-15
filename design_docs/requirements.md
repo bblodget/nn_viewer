@@ -1,4 +1,4 @@
-# SchematicViewer: Interactive Neural Network Node Diagram Tool
+# NNCircuit: Interactive Neural Network Diagram Tool
 
 ## Reference Diagram
 
@@ -8,7 +8,7 @@ Here is a hand-drawn example that this project aims to replicate:
 
 ## Overview
 
-**SchematicViewer** is a web-based tool for creating and visualizing **low-level schematic diagrams** of neural network components (e.g., quantized linear layers, ReLU² activations, clamps, etc.). It allows users to define diagrams using a **hierarchical JSON format** and view them interactively in the browser with support for **panning, zooming, module navigation, and node-level inspection**.
+**NNCircuit** is a web-based tool for creating and visualizing **low-level schematic diagrams** of neural network components (e.g., quantized linear layers, ReLU² activations, clamps, etc.). It allows users to define diagrams using a **hierarchical JSON format** and view them interactively in the browser with support for **panning, zooming, module navigation, and node-level inspection**.
 
 The tool is inspired by hand-drawn schematics and is intended to show what's happening **inside a neural network node**, including individual operations like multiplication, addition, and nonlinear activations.
 

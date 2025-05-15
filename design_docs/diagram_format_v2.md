@@ -1,6 +1,6 @@
-# SchematicViewer Diagram Format v2
+# NNCircuit Diagram Format v2
 
-This document describes the updated JSON format for the Neural Network SchematicViewer, focusing on hierarchical module representation and navigation.
+This document describes the updated JSON format for the NNCircuit Viewer, focusing on hierarchical module representation and navigation.
 
 ## Core Philosophy
 
