@@ -1,0 +1,131 @@
+{
+  "entryPointModule": "mainDiagram",
+  "moduleDefinitions": {
+    "macBlock": {
+      "inputs": ["x0", "w0", "x1", "w1"],
+      "outputs": ["out"],
+      "components": [
+        {
+          "id": "mul0",
+          "type": "mul",
+          "inputs": {
+            "in1": "$.x0",
+            "in2": "$.w0"
+          }
+        },
+        {
+          "id": "mul1",
+          "type": "mul",
+          "inputs": {
+            "in1": "$.x1",
+            "in2": "$.w1"
+          }
+        },
+        {
+          "id": "add1",
+          "type": "add",
+          "inputs": {
+            "in1": "mul0.out",
+            "in2": "mul1.out"
+          }
+        }
+      ],
+      "outputMappings": {
+        "out": "add1.out"
+      }
+    },
+    "mainDiagram": {
+      "inputs": ["x0", "w0", "x1", "w1", "bias", "scale"],
+      "outputs": ["out"],
+      "components": [
+        {
+          "id": "macBlock1",
+          "type": "module",
+          "moduleType": "macBlock",
+          "label": "MAC Block",
+          "inputs": {
+            "x0": "$.x0",
+            "w0": "$.w0",
+            "x1": "$.x1",
+            "w1": "$.w1"
+          }
+        },
+        {
+          "id": "reg_bias1",
+          "type": "reg",
+          "inputs": {
+            "in": "$.bias"
+          }
+        },
+        {
+          "id": "reg_bias2",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_bias1.out"
+          }
+        },
+        {
+          "id": "add2",
+          "type": "add",
+          "inputs": {
+            "in1": "macBlock1.out",
+            "in2": "reg_bias2.out"
+          }
+        },
+        {
+          "id": "relu1",
+          "type": "relu2",
+          "inputs": {
+            "in": "add2.out"
+          }
+        },
+        {
+          "id": "reg_scale1",
+          "type": "reg",
+          "inputs": {
+            "in": "$.scale"
+          }
+        },
+        {
+          "id": "reg_scale2",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_scale1.out"
+          }
+        },
+        {
+          "id": "reg_scale3",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_scale2.out"
+          }
+        },
+        {
+          "id": "reg_scale4",
+          "type": "reg",
+          "inputs": {
+            "in": "reg_scale3.out"
+          }
+        },
+        {
+          "id": "mul2",
+          "type": "mul",
+          "inputs": {
+            "in1": "relu1.out",
+            "in2": "reg_scale4.out"
+          }
+        },
+        {
+          "id": "clamp1",
+          "type": "clamp",
+          "inputs": {
+            "in": "mul2.out"
+          }
+        }
+      ],
+      "outputMappings": {
+        "out": "clamp1.out"
+      }
+    }
+  }
+}
