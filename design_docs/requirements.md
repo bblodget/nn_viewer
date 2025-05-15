@@ -8,7 +8,7 @@ Here is a hand-drawn example that this project aims to replicate:
 
 ## Overview
 
-**SchematicViewer** is a web-based tool for creating and visualizing **low-level schematic diagrams** of neural network components (e.g., quantized linear layers, ReLU² activations, clamps, etc.). It allows users to define diagrams using a **JSON netlist format** and view them interactively in the browser with support for **panning, zooming, and node-level inspection**.
+**SchematicViewer** is a web-based tool for creating and visualizing **low-level schematic diagrams** of neural network components (e.g., quantized linear layers, ReLU² activations, clamps, etc.). It allows users to define diagrams using a **hierarchical JSON format** and view them interactively in the browser with support for **panning, zooming, module navigation, and node-level inspection**.
 
 The tool is inspired by hand-drawn schematics and is intended to show what's happening **inside a neural network node**, including individual operations like multiplication, addition, and nonlinear activations.
 
@@ -17,10 +17,14 @@ The tool is inspired by hand-drawn schematics and is intended to show what's hap
 ## Goals
 
 - ✅ Create clean, schematic-style visualizations of neural network internals
-- ✅ Define circuits using a **JSON netlist**
+- ✅ Define circuits using a **hierarchical JSON format** with module reuse
 - ✅ View the schematic in any modern **web browser**
-- ✅ Support **zooming and panning** for exploring complex diagrams
-- ✅ Allow future expansion to group nodes into subcircuits or macros
+- ✅ Support **zooming, panning, and module navigation** for exploring complex diagrams
+- ✅ Allow parameterization of components and modules for flexibility
+- ✅ Support component loops for generating repetitive structures
+- ✅ Enable port grouping and arrangement for better organization
+- ✅ Support multi-bit signals with indexing capabilities
+- ✅ Visualize clock cycle timing with a grid-based layout system
 
 ---
 
@@ -29,27 +33,55 @@ The tool is inspired by hand-drawn schematics and is intended to show what's hap
 ### Input Format
 
 - Input will be provided as a **JSON file** containing:
-  - A list of `nodes` (components like `mul`, `add`, `ReLU²`, etc.)
-  - A list of `connections` (edges between nodes)
+  - An `entryPointModule` specifying the initial module to display
+  - `moduleDefinitions` containing reusable module templates
+  - Optional `primitiveDefinitions` for custom primitive components
+  - A unified component model for primitives and modules
 
-### Node Types
+### Primitive Types
 
-Supported component types include:
-- `input`: an input signal (e.g., `x0`, `w0`, `bias`)
-- `output`: a final output value (e.g., `y`)
-- `add`: addition block with two inputs
-- `mul`: multiplication block with two inputs
-- `relu2`: square of ReLU activation
-- `clamp`: range limiter
-- `quantized_linear`: a grouped macro for a common neural net pattern (optional future)
+Supported primitive types include:
+- `add`: Addition operation with two inputs
+- `mul`: Multiplication operation with two inputs
+- `relu2`: Square of ReLU activation
+- `clamp`: Range limiter
+- `reg`: Register (for delay/pipeline stages)
+
+### Module System
+
+- Hierarchical organization with modules containing components
+- Component instantiation with parameters and input mappings
+- Module outputs connected via output mappings
+- Parameterization for dynamic sizing and configuration
+- Component loops for generating repetitive structures
+- Port groups for organizing related signals
+- Support for multi-bit signals with indexing
+
+### Grid and Timing System
+
+- Components positioned on a grid-based layout system
+- Clock cycle counts displayed at the top of the grid
+- Horizontal position (column) determined by clock cycle
+- Vertical position (row) determined by signal flow and organization
+- Each clock cycle boundary clearly delineated in the visualization
+- Primitives specify their `latency` (clock cycle count), allowing:
+  - Input and output primitives have zero latency (no cycle delay)
+  - Processing primitives (add, mul, etc.) have configurable latency (default: 1)
+  - Register primitives always have latency of 1
+- Module latency automatically calculated based on internal component paths
+- Width of modules determined by their overall latency (clock cycle count)
+- Components within a module aligned to appropriate clock cycle columns
 
 ### Web-Based Viewer
 
 - Implemented using **D3.js**
-- Render nodes as SVG blocks
-- Draw connections as lines with arrows
+- Render nodes as SVG blocks with appropriate styling
+- Draw connections as lines with arrows and signal type indication
 - Enable **zoom and pan** using `d3.zoom()`
-- Optional: Highlight active path or evaluate data flow
+- Support module navigation (drill-down and up)
+- Implement compression mode toggle
+- Parameter substitution and expression evaluation
+- Visualize clock cycle boundaries and timing
 
 ---
 
@@ -62,33 +94,81 @@ Supported component types include:
 
 ## Future Enhancements
 
-- Group nodes into collapsible macros (e.g., `quantized_linear`)
 - Tooltip or click-to-inspect node metadata
-- Color-code node types for readability
+- Color-code node types for readability (implemented in v2)
 - Export diagrams as SVG or PNG
 - Optional animation for signal flow
+- Enhanced expression evaluation capabilities
+- Parameter scope inheritance from parent to child modules
+- Visual indicators for multi-bit signals
+- Critical path highlighting
 
 ---
 
 ## Deliverables
 
 - `index.html` — the D3-based viewer
-- `diagram.json` — sample schematic of a simple neural node
-- `viewer.js` — renderer script
-- Optional: CSS styling for clean schematic look
+- `viewer.js` — renderer script implementing the v2 format
+- Sample JSON files demonstrating the new format
+- CSS styling for clean schematic look
 
 ---
 
 ## License
 
-This tool will be open-source under the MIT License unless otherwise decided.
+This tool is open-source under the GPL-3.0 License.
 
-## JSON Syntax Requirements (2025-05-13 Update)
+## JSON Format Requirements (V2)
 
-- All vector inputs must be arrays of the correct length (e.g., "input": ["x0.out", "x1.out"] for a size-2 input)
-- All scalar inputs must be strings (e.g., "bias": "bias.out")
-- All connections must be in the format "elementId.portName"
-- Module definitions must specify input sizes and types clearly
-- Module instances must match the expected input types (array for vectors, string for scalars)
+- **Root Structure**:
+  - Must define `entryPointModule` to specify initial view
+  - Must include `moduleDefinitions` object with at least one module
+  - May include `primitiveDefinitions` for custom primitives
 
+- **Module Definition**:
+  - Must include `inputs` and `outputs` arrays with port definitions
+  - Should include `components` array or `component_loops` for content
+  - Must define `outputMappings` to connect internal components to outputs
+  - May include `parameters` for configurable values
+  - May include `port_groups` for organizing related ports
+  - May include `display` properties for visual customization
 
+- **Primitive Definition**:
+  - Must be marked with `is_primitive: true`
+  - Must include `inputs` and `outputs` arrays with port definitions
+  - Should include `latency` field specifying clock cycle count (default: 1)
+  - Input/output primitives should specify `latency: 0`
+  - May include `display` properties for visual representation
+
+- **Component Instantiation**:
+  - Must include `id` (unique within module) and `type`
+  - Must include `inputs` object mapping component inputs to sources
+  - May include `parameters` to override default values
+  - May include `label` to override default display label
+
+- **Connection References**:
+  - Internal component references: `"componentId.portName"`
+  - Module input references: `"$.inputName"`
+  - Indexed port references: `"componentId.portName[index]"` or `"$.inputName[index]"`
+
+- **Parameter Substitution**:
+  - Use `${PARAM_NAME}` syntax to reference parameters
+  - Parameters can be used in port sizes, labels, and other fields
+  - Support for expressions within `${...}` for dynamic values
+
+- **Component Loops**:
+  - Define `iterator`, `range`, and `components` for repetitive structures
+  - Use `${iterator}` in expressions for dynamic values
+  - Ensure generated component IDs are unique
+
+- **Display Properties**:
+  - Module height can be specified, width is determined by latency
+  - Color and label properties for visual customization
+  - Compression mode for minimal width display
+
+- **Layout and Timing**:
+  - Clock cycle grid visualized with column boundaries
+  - Components positioned horizontally based on their clock cycle
+  - Input primitives always placed in cycle 0
+  - Component cycle position = max(input cycles) + component latency
+  - Module width determined by longest path from input to output

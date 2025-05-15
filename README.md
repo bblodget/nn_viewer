@@ -4,9 +4,9 @@ A web-based tool for creating and visualizing low-level schematic diagrams of ne
 
 ## Overview
 
-SchematicViewer renders interactive diagrams defined in JSON netlist format using D3.js, providing a clean, schematic-style visualization of neural network internals.
+SchematicViewer renders interactive diagrams defined in a hierarchical JSON format using D3.js, providing a clean, schematic-style visualization of neural network internals with module-based organization and clock cycle timing visualization.
 
-**Note:** This project is a work in progress. See the [Implementation Plan](design_docs/implementation_plan.md) for upcoming features and development status.
+**Note:** This project is a work in progress. See the [Status Updates](design_docs/status/) for upcoming features and development status.
 
 ![SchematicViewer Screenshot](screenshots/shot017.png)
 
@@ -17,25 +17,25 @@ You can try SchematicViewer online at: https://bblodget.github.io/nn_viewer/
 For a quick demo:
 1. Download one of the sample JSON files from the [/json](json/) directory:
    - [primitives_only.json](json/primitives_only.json) - Simple primitives diagram
-   - [module_definition.json](json/module_definition.json) - Advanced module-based diagram
+   - [mac_block.json](json/mac_block.json) - Advanced module-based diagram
 2. Drag and drop the file into the online viewer
 3. Explore the neural network component visualization
 
 ## Features
 
-- **Interactive Visualization**: Pan, zoom, and inspect individual components
-- **Automatic Layout**: Positions are determined based on connections and dependencies
-- **Clock Cycle Alignment**: Components are automatically arranged in temporal order
-- **Multiple Component Types**: Support for common neural network primitives
+- **Hierarchical Module System**: Define reusable modules with parameterization
+- **Parameter System**: Configure modules with dynamic sizing and values
+- **Component Loops**: Generate repetitive structures efficiently
+- **Port Groups**: Organize related signals with custom arrangements
+- **Multi-bit Signals**: Support for buses with indexing capabilities
+- **Clock Cycle Grid**: Visualize timing with automatic component positioning
+- **Expression Evaluation**: Dynamic values using parameter expressions
+- **Module Navigation**: Drill down into modules to view internal structure
+- **Compression Mode**: Toggle between full and compact module display
+- **Interactive Visualization**: Pan, zoom, and inspect components
+- **Automatic Layout**: Positions determined by data flow and clock cycle
 - **Connection Highlighting**: Click on components to highlight data paths
-- **Drag & Drop Interface**: Easily load diagram files via drag and drop
-- **Hierarchical Modules**: Support for reusable module definitions with vector inputs
-- **Expandable/Collapsible**: Modules can be expanded to view internal structure
-- **Module Reuse**: Define modules once and reuse them throughout the diagram
-- **Vector Input Support**: Handle arrays of inputs and weights with indexed access
-- **Component Instantiation**: Dynamic creation of internal components from templates
-- **Input Reference Resolution**: Special syntax for module input reference ($.input[index])
-- **Error Handling**: Robust validation and error reporting for module expansion
+- **Drag & Drop Interface**: Easily load diagram files
 
 ## Usage
 
@@ -48,127 +48,109 @@ For a quick demo:
    - Zoom: Mouse wheel or zoom buttons (+/-)
    - Pan: Click and drag on the background
    - Select: Click on components to highlight their connections
-   - Reset View: Double-click or click the reset button (⟲)
+   - Navigate Modules: Double-click on modules to view internal structure
+   - Return to Parent: Use the back button or breadcrumbs
+   - Toggle Compression: Switch between full and compressed views
+   - Reset View: Double-click on background or click the reset button (⟲)
 
-## Diagram Format
+## Diagram Format (V2)
 
-SchematicViewer supports two primary JSON formats:
-
-### Basic Format (Primitives Only)
-
-A simplified JSON format that automatically positions components based on their connections:
-
-```json
-[
-  {
-    "id": "x0",
-    "type": "input",
-    "label": "x₀"
-  },
-  {
-    "id": "mul1",
-    "type": "mul",
-    "inputs": {
-      "in1": "x0.out",
-      "in2": "w0.out"
-    }
-  },
-  {
-    "id": "output1",
-    "type": "output",
-    "label": "y",
-    "inputs": {
-      "in": "mul1.out"
-    }
-  }
-]
-```
-
-The diagram is defined as an array of primitives, where:
-- Components are positioned automatically based on their connections
-- Input primitives are always in cycle 0
-- Other primitives are positioned at (max input cycle + 1)
-- Vertical ordering is determined intelligently based on connection patterns
-
-### Advanced Format (With Module Definitions)
-
-An extended format supporting hierarchical modules with reusable definitions:
+SchematicViewer uses a hierarchical JSON format with modules, primitives, and parameterization:
 
 ```json
 {
+  "entryPointModule": "mainDiagram",
   "moduleDefinitions": {
-    "quantized_linear": {
+    "module1": {
+      "is_primitive": false,
+      "parameters": {
+        "DATA_WIDTH": 8,
+        "PAIRS": 2
+      },
       "inputs": [
-        {"name": "input", "size": 2},
-        {"name": "weight", "size": 2},
-        "bias"
+        {"name": "inputName1", "size": "${DATA_WIDTH}", "group": "group1"},
+        {"name": "inputName2", "size": "${DATA_WIDTH}", "group": "group1"}
       ],
-      "outputs": ["out"],
+      "outputs": [
+        {"name": "outputName1", "size": 1}
+      ],
+      "port_groups": {
+        "group1": {
+          "ports": ["inputName1", "inputName2"],
+          "arrangement": "interleaved"
+        }
+      },
       "components": [
-        /* Internal components */
+        { "id": "component1", "type": "add", "inputs": { "in1": "$.inputName1", "in2": "$.inputName2" } }
       ],
       "outputMappings": {
-        "out": "clamp.out"
+        "outputName1": "component1.out"
+      },
+      "display": {
+        "height": 2,
+        "color": "#2196F3",
+        "label": "Custom Module (${PAIRS}x)"
       }
     }
   },
-  "elements": [
-    /* Primitives and module instances */
-    {
-      "id": "linear1",
-      "type": "module",
-      "moduleType": "quantized_linear",
-      "inputs": {
-        "input": ["x0.out", "x1.out"],
-        "weight": ["w0.out", "w1.out"],
-        "bias": "bias.out"
+  "primitiveDefinitions": {
+    "add": {
+      "is_primitive": true,
+      "latency": 1,
+      "inputs": [
+        {"name": "in1", "size": 1},
+        {"name": "in2", "size": 1}
+      ],
+      "outputs": [
+        {"name": "out", "size": 1}
+      ],
+      "display": {
+        "symbol": "+",
+        "color": "#4CAF50",
+        "shape": "circle"
       }
     }
-  ]
+  }
 }
 ```
 
+The diagram is defined with these key elements:
+- `entryPointModule`: Specifies the initial module to display
+- `moduleDefinitions`: Contains reusable module templates
+- `primitiveDefinitions`: Defines primitive component types (optional)
+- `components`: Internal components within a module
+- `component_loops`: Templates for generating repetitive components
+- `parameters`: Configurable values that can be referenced elsewhere
+- `port_groups`: Grouping and arrangement of related ports
+
 For detailed format documentation, see:
-- [Diagram Format](design_docs/diagram_format.md)
-- [Hierarchical Structure](design_docs/hierarchical_structure.md)
-- [Module Reuse](design_docs/module_reuse.md)
+- [Diagram Format V2](design_docs/diagram_format_v2.md)
+- [Requirements](design_docs/requirements.md)
 
 ## Supported Component Types
 
 ### Primitives
 
-| Type | Description | Input Ports | Output Ports |
-|------|-------------|-------------|--------------|
-| `input` | Input signal | None | `out` |
-| `output` | Output value | `in` | None |
-| `add` | Addition operation | `in1`, `in2` | `out` |
-| `mul` | Multiplication operation | `in1`, `in2` | `out` |
-| `relu2` | Square of ReLU activation | `in` | `out` |
-| `clamp` | Range limiter | `in` | `out` |
-| `reg` | Register for clock cycle delay | `in` | `out` |
+| Type | Description | Input Ports | Output Ports | Latency |
+|------|-------------|-------------|--------------|---------|
+| `input` | Input signal | None | `out` | 0 |
+| `output` | Output value | `in` | None | 0 |
+| `add` | Addition operation | `in1`, `in2` | `out` | 1 |
+| `mul` | Multiplication operation | `in1`, `in2` | `out` | 1 |
+| `relu2` | Square of ReLU activation | `in` | `out` | 1 |
+| `clamp` | Range limiter | `in` | `out` | 1 |
+| `reg` | Register for clock cycle delay | `in` | `out` | 1 |
 
 ### Modules
 
-The SchematicViewer supports hierarchical modules - reusable components that encapsulate multiple primitives:
+SchematicViewer supports hierarchical modules - reusable components that encapsulate primitives and other modules:
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `module` | Compound component with multiple internal primitives | `quantized_linear` |
-
-Modules support:
-- Vector inputs/outputs (arrays of connections)
-- Expandable/collapsible views to explore internal structure
-- Reusable module definitions stored in a module registry
-- Special reference syntax for accessing module inputs ($.inputName[index])
-- Internal component instantiation with automatic ID prefixing
-- Proper port mapping for module inputs and outputs
-- Cycle-aware positioning for internal components
-- Error handling and validation for module expansion
-
-For details on creating and using modules, see:
-- [Hierarchical Structure](design_docs/hierarchical_structure.md) - Learn about the hierarchical design approach
-- [Module Reuse](design_docs/module_reuse.md) - Understand how module definitions work
-
+- **Unified Component Model**: Primitives and modules share a common instantiation interface
+- **Parameterization**: Modules can have configurable parameters with expression support
+- **Port Grouping**: Related ports can be grouped for organization and layout control
+- **Dynamic Component Generation**: Loops can generate repetitive components
+- **Automatic Layout**: Components positioned based on clock cycle timing
+- **Module Navigation**: Drill down and up through the module hierarchy
 
 ## Installation
 
@@ -182,8 +164,10 @@ No installation required! This is a pure HTML/JavaScript application that runs d
 
 - **Frontend**: HTML, CSS, JavaScript
 - **Visualization**: D3.js for SVG-based rendering
-- **Interaction**: Zoom, pan, selection capabilities
-- **Layout**: Automatic positioning based on dataflow dependencies
+- **Expression Evaluation**: Safe evaluation of parameter expressions
+- **Clock Cycle Grid**: Visualization of component timing
+- **Module Registry**: Central storage of module and primitive definitions
+- **Automatic Layout**: Positioning based on data flow and clock cycles
 
 ## Development
 
@@ -196,13 +180,16 @@ To modify or extend the SchematicViewer:
 3. Test by opening `index.html` in a web browser
 4. Use browser dev tools for debugging
 
-See [Implementation Plan](design_docs/implementation_plan.md) for the planned development roadmap.
+See the [Status Updates](design_docs/status/) for the current development status.
 
 ## Project Status
 
-SchematicViewer is currently under active development. While the core functionality is working, there are several planned enhancements:
+SchematicViewer is currently being rewritten to support the v2 format. The implementation will follow the phases outlined in the [latest status update](design_docs/status/status_2025_05_15.md):
 
-See the [Implementation Plan](design_docs/implementation_plan.md) for a detailed roadmap and development status.
+1. **Core Architecture**: Module/primitive registry, parameter resolution, basic rendering
+2. **Advanced Features**: Port groups, component loops, module navigation
+3. **Layout and Visualization**: Clock cycle positioning, compression mode, visual customization
+4. **User Interface**: Navigation controls, compression toggle, zooming and panning
 
 ## License
 
