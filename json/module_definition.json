@@ -1,11 +1,15 @@
 {
+  "entryPointModule": "topLevelDiagram",
   "moduleDefinitions": {
     "quantized_linear": {
+      "parameters": {
+        "INPUT_SIZE": 128
+      },
       "inputs": [
-        {"name": "input", "size": 2},
-        {"name": "weight", "size": 2},
-        "bias",
-        "scale"
+        {"name": "input", "size": "$INPUT_SIZE", "interleave": "input_weight"},
+        {"name": "weight", "size": "$INPUT_SIZE", "interleave": "input_weight"},
+        {"name": "bias", "size": 1},
+        {"name": "scale", "size": 1}
       ],
       "outputs": ["out"],
       "components": [
@@ -109,58 +113,65 @@
       "outputMappings": {
         "out": "clamp1.out"
       }
-    }
-  },
-  "elements": [
-    {
-      "id": "x0",
-      "type": "input",
-      "label": "x₀"
     },
-    {
-      "id": "w0",
-      "type": "input",
-      "label": "w₀"
-    },
-    {
-      "id": "x1",
-      "type": "input",
-      "label": "x₁"
-    },
-    {
-      "id": "w1",
-      "type": "input",
-      "label": "w₁"
-    },
-    {
-      "id": "bias",
-      "type": "input",
-      "label": "bias"
-    },
-    {
-      "id": "scale",
-      "type": "input",
-      "label": "scale"
-    },
-    {
-      "id": "linear1",
-      "type": "module",
-      "moduleType": "quantized_linear",
-      "label": "Linear Unit 1",
-      "inputs": {
-        "input": ["x0.out", "x1.out"],
-        "weight": ["w0.out", "w1.out"],
-        "bias": "bias.out",
-        "scale": "scale.out"
+    "topLevelDiagram": {
+      "inputs": [],
+      "outputs": ["final_y_output"],
+      "components": [
+        {
+          "id": "x0",
+          "type": "input",
+          "label": "x₀"
+        },
+        {
+          "id": "w0",
+          "type": "input",
+          "label": "w₀"
+        },
+        {
+          "id": "x1",
+          "type": "input",
+          "label": "x₁"
+        },
+        {
+          "id": "w1",
+          "type": "input",
+          "label": "w₁"
+        },
+        {
+          "id": "bias",
+          "type": "input",
+          "label": "bias"
+        },
+        {
+          "id": "scale",
+          "type": "input",
+          "label": "scale"
+        },
+        {
+          "id": "linear1",
+          "type": "module",
+          "moduleType": "quantized_linear",
+          "label": "Linear Unit 1",
+          "inputs": {
+            "input": ["x0.out", "x1.out"],
+            "weight": ["w0.out", "w1.out"],
+            "bias": "bias.out",
+            "scale": "scale.out"
+          }
+        },
+        {
+          "id": "output1",
+          "type": "output",
+          "label": "y",
+          "inputs": {
+            "in": "linear1.out"
+          }
+        }
+      ],
+      "outputMappings": {
+        "final_y_output": "linear1.out" 
       }
-    },
-    {
-      "id": "output1",
-      "type": "output",
-      "label": "y",
-      "inputs": {
-        "in": "linear1.out"
-      }
     }
-  ]
+  }
 }
