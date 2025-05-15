@@ -1,6 +1,42 @@
 {
   "entryPointModule": "mainDiagram",
   "primitiveDefinitions": {
+    "delay_chain": {
+      "is_primitive": false,
+      "parameters": {
+        "DELAY": 1,
+        "DATA_WIDTH": 1
+      },
+      "inputs": [
+        {"name": "in", "size": "${DATA_WIDTH}"}
+      ],
+      "outputs": [
+        {"name": "out", "size": "${DATA_WIDTH}"}
+      ],
+      "component_loops": [
+        {
+          "iterator": "i",
+          "range": [0, "${DELAY-1}"],
+          "components": [
+            {
+              "id": "reg_${i}",
+              "type": "reg",
+              "inputs": {
+                "in": "${i == 0 ? '$.in' : 'reg_' + (i-1) + '.out'}"
+              }
+            }
+          ]
+        }
+      ],
+      "outputMappings": {
+        "out": "${DELAY > 0 ? 'reg_' + (DELAY-1) + '.out' : '$.in'}"
+      },
+      "display": {
+        "height": 1,
+        "color": "#9C27B0",
+        "label": "Delay ${DELAY}"
+      }
+    },
     "add": {
       "is_primitive": true,
       "inputs": [
@@ -180,17 +216,14 @@
           }
         },
         {
-          "id": "reg_bias1",
-          "type": "reg",
+          "id": "bias_delay",
+          "type": "delay_chain",
+          "parameters": {
+            "DELAY": 2,
+            "DATA_WIDTH": 1
+          },
           "inputs": {
             "in": "$.bias"
-          }
-        },
-        {
-          "id": "reg_bias2",
-          "type": "reg",
-          "inputs": {
-            "in": "reg_bias1.out"
           }
         },
         {
@@ -198,7 +231,7 @@
           "type": "add",
           "inputs": {
             "in1": "macBlock1.out",
-            "in2": "reg_bias2.out"
+            "in2": "bias_delay.out"
           }
         },
         {
@@ -209,31 +242,14 @@
           }
         },
         {
-          "id": "reg_scale1",
-          "type": "reg",
+          "id": "scale_delay",
+          "type": "delay_chain",
+          "parameters": {
+            "DELAY": 4,
+            "DATA_WIDTH": "${COMPUTE_WIDTH}"
+          },
           "inputs": {
             "in": "$.scale"
-          }
-        },
-        {
-          "id": "reg_scale2",
-          "type": "reg",
-          "inputs": {
-            "in": "reg_scale1.out"
-          }
-        },
-        {
-          "id": "reg_scale3",
-          "type": "reg",
-          "inputs": {
-            "in": "reg_scale2.out"
-          }
-        },
-        {
-          "id": "reg_scale4",
-          "type": "reg",
-          "inputs": {
-            "in": "reg_scale3.out"
           }
         },
         {
@@ -241,7 +257,7 @@
           "type": "mul",
           "inputs": {
             "in1": "relu1.out",
-            "in2": "reg_scale4.out"
+            "in2": "scale_delay.out"
           }
         },
         {

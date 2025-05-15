@@ -93,7 +93,13 @@ Each module is defined with this structure:
     - `color`: Optional color for visual identification
     - `spacing`: Optional value for spacing between grouped ports
 - `components`: Array of component definitions within the module
+- `component_loops`: Array of loop definitions for generating repetitive components
+  - `iterator`: Name of the iterator variable to use in expressions
+  - `range`: Array with [start, end] values (inclusive), can use parameter expressions
+  - `components`: Array of component templates to instantiate for each iteration
+  - Component templates can use `${iterator}` in IDs and `${expression}` for dynamic values
 - `outputMappings`: Maps module output ports to internal component outputs
+  - Can use parameter expressions like `${PARAM_NAME}` and conditional expressions
 - `display`: Optional visual customization properties
   - `height`: Height of the module in grid units (default value determined by renderer)
   - `color`: Background/border color for the module (in HTML color format)
@@ -509,6 +515,9 @@ The top-level module (specified by `entryPointModule`) is treated identically to
 16. **Parameter Substitution**: Use `${PARAM_NAME}` syntax to access parameter values in various fields
 17. **Port Grouping**: Related ports can be grouped for layout coordination
 18. **Custom Port Arrangements**: Specify how grouped ports should be arranged (interleaved, sequential, etc.)
+19. **Component Loops**: Generate repetitive components using loop constructs with iterators
+20. **Dynamic Expressions**: Use JavaScript-like expressions for conditional component generation and connections
+21. **Parameterized Structure**: Module structure can adapt based on parameter values
 
 ## Implementation Notes
 
@@ -535,6 +544,18 @@ When implementing the v2 format:
    - Interleaved: Alternate ports from the group (A, B, A, B, ...)
    - Sequential: Group similar ports together (A, A, A, B, B, B, ...)
    - Alternating: Other patterns like (A, B, B, A, A, B, ...)
+12. **Expression Evaluation**: Implement a safe expression evaluator for `${...}` expressions:
+   - Support basic arithmetic operations (+, -, *, /, %)
+   - Support comparison operators (==, !=, <, >, <=, >=)
+   - Support conditional expressions (condition ? trueValue : falseValue)
+   - Support string concatenation for building IDs and references
+   - Provide access to loop iterator variables
+   - Implement proper error handling for malformed expressions
+13. **Component Loop Processing**: When processing component loops:
+   - Generate actual component definitions for each iteration
+   - Apply parameter and iterator substitutions
+   - Validate that generated component IDs are unique
+   - Ensure all references are resolvable
 
 ### Example of Port Indexing
 
@@ -562,3 +583,46 @@ And individual bit access:
   }
 }
 ```
+
+### Example of Component Loops
+
+For repetitive structures like delay chains, you can use component loops:
+
+```json
+{
+  "is_primitive": false,
+  "parameters": {
+    "DELAY": 5,
+    "WIDTH": 1
+  },
+  "inputs": [
+    {"name": "in", "size": "${WIDTH}"}
+  ],
+  "outputs": [
+    {"name": "out", "size": "${WIDTH}"}
+  ],
+  "component_loops": [
+    {
+      "iterator": "i",
+      "range": [0, "${DELAY-1}"],
+      "components": [
+        {
+          "id": "reg_${i}",
+          "type": "reg",
+          "inputs": {
+            "in": "${i == 0 ? '$.in' : 'reg_' + (i-1) + '.out'}"
+          }
+        }
+      ]
+    }
+  ],
+  "outputMappings": {
+    "out": "${DELAY > 0 ? 'reg_' + (DELAY-1) + '.out' : '$.in'}"
+  }
+}
+```
+
+This example creates a configurable delay chain with:
+- Parameter-controlled number of registers (`DELAY`)
+- Dynamic connection between stages
+- Conditional output mapping depending on delay value
