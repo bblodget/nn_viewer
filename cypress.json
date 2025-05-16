@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://localhost:8080",
+  "viewportWidth": 1200,
+  "viewportHeight": 800,
+  "video": false,
+  "screenshotOnRunFailure": true,
+  "integrationFolder": "test/e2e",
+  "pluginsFile": "test/cypress/plugins/index.js",
+  "supportFile": "test/cypress/support/index.js"
+}

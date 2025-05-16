@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNCircuit - Neural Network Diagram Tool</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Include D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="title-container">
+                <h1>NNCircuit <span class="subtitle">Neural Network Schematic Diagram Tool</span></h1>
+            </div>
+            <button id="toggle-controls" class="toggle-button header-button">
+                <span class="toggle-icon">▼</span> File Options
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div id="controls-container">
+            <div id="controls" class="controls-panel">
+                <div class="control-group">
+                    <label for="file-input">Load Diagram:</label>
+                    <input type="file" id="file-input" accept=".json">
+                </div>
+                <div class="control-group" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+                    <label>Grid Options:</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="grid-toggle" style="font-weight: normal;">
+                            <input type="checkbox" id="grid-toggle" checked>
+                            Show Grid
+                        </label>
+                        <label for="grid-spacing" style="font-weight: normal;">
+                            Spacing:
+                            <select id="grid-spacing">
+                                <option value="80">Narrow</option>
+                                <option value="100" selected>Medium</option>
+                                <option value="150">Wide</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="control-group" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+                    <label>Visualization:</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="compression-toggle" style="font-weight: normal;">
+                            <input type="checkbox" id="compression-toggle">
+                            Module Compression
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="diagram-container">
+            <!-- SVG diagram will be rendered here -->
+            <div class="drag-message">
+                <div>Drop JSON file here</div>
+                <div style="font-size: 0.8rem; margin-top: 0.5rem;">Drag and drop a diagram.json file to visualize</div>
+            </div>
+
+            <!-- Zoom controls -->
+            <div class="zoom-controls">
+                <button id="zoom-in" title="Zoom In">+</button>
+                <button id="zoom-out" title="Zoom Out">−</button>
+                <button id="zoom-reset" title="Reset View">⟲</button>
+            </div>
+
+            <!-- Navigation breadcrumb (added for V2) -->
+            <div id="module-navigation" class="module-navigation">
+                <!-- Navigation breadcrumbs will be dynamically added here -->
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>NNCircuit - GNU GPL v3.0 License</p>
+    </footer>
+
+    <!-- Load bundled application script -->
+    <script src="dist/nncircuit.js"></script>
+</body>
+</html>
