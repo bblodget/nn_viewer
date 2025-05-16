@@ -1,0 +1,116 @@
+{
+    "componentDefinitions": {
+        "add": {
+            "is_primitive": true,
+            "inputs": [
+                { "name": "in1", "size": 1 },
+                { "name": "in2", "size": 1 }
+            ],
+            "outputs": [
+                { "name": "out", "size": 1 }
+            ],
+            "latency": 1,
+            "display": {
+                "symbol": "+",
+                "color": "#4CAF50",
+                "shape": "circle"
+            }
+        },
+        "mul": {
+            "is_primitive": true,
+            "inputs": [
+                { "name": "in1", "size": 1 },
+                { "name": "in2", "size": 1 }
+            ],
+            "outputs": [
+                { "name": "out", "size": 1 }
+            ],
+            "latency": 1,
+            "display": {
+                "symbol": "×",
+                "color": "#2196F3",
+                "shape": "circle"
+            }
+        },
+        "relu2": {
+            "is_primitive": true,
+            "inputs": [
+                { "name": "in", "size": 1 }
+            ],
+            "outputs": [
+                { "name": "out", "size": 1 }
+            ],
+            "latency": 1,
+            "display": {
+                "symbol": "ReLU²",
+                "color": "#FF9800",
+                "shape": "rect"
+            }
+        },
+        "clamp": {
+            "is_primitive": true,
+            "inputs": [
+                { "name": "in", "size": 1 }
+            ],
+            "outputs": [
+                { "name": "out", "size": 1 }
+            ],
+            "latency": 1,
+            "display": {
+                "symbol": "◊",
+                "color": "#F44336",
+                "shape": "diamond"
+            }
+        },
+        "reg": {
+            "is_primitive": true,
+            "inputs": [
+                { "name": "in", "size": 1 }
+            ],
+            "outputs": [
+                { "name": "out", "size": 1 }
+            ],
+            "latency": 1,
+            "display": {
+                "symbol": "D",
+                "color": "#9C27B0",
+                "shape": "rect"
+            }
+        },
+        "delay_chain": {
+            "parameters": {
+                "DELAY": 1,
+                "DATA_WIDTH": 1
+            },
+            "inputs": [
+                { "name": "in", "size": "${DATA_WIDTH}" }
+            ],
+            "outputs": [
+                { "name": "out", "size": "${DATA_WIDTH}" }
+            ],
+            "component_loops": [
+                {
+                    "iterator": "i",
+                    "range": [0, "${DELAY-1}"],
+                    "components": [
+                        {
+                            "id": "reg_${i}",
+                            "type": "reg",
+                            "inputs": {
+                                "in": "${i == 0 ? '$.in' : 'reg_' + (i-1) + '.out'}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "outputMappings": {
+                "out": "${DELAY > 0 ? 'reg_' + (DELAY-1) + '.out' : '$.in'}"
+            },
+            "display": {
+                "height": 1,
+                "color": "#9C27B0",
+                "label": "Delay ${DELAY}"
+            }
+        }
+    }
+} 
